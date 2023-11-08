@@ -110,6 +110,11 @@ namespace qtils::error {
       return std::nullopt;
     }
 
+    template <IsEnum E>
+    bool ec(E e) const {
+      return ec<E>() == e;
+    }
+
    protected:
     std::any error_;
     fmt::format_context::iterator (*error_format_)(
@@ -121,6 +126,23 @@ namespace qtils::error {
 
   struct Errors {
     Errors(Error error) : v{std::move(error)} {}
+
+    template <typename F>
+    auto find(const F &f) const {
+      auto it = std::find_if(v.begin(), v.end(), f);
+      return it == v.end() ? std::nullopt : std::make_optional(it);
+    }
+
+    template <typename F>
+    auto find(const F &f) {
+      auto it = std::find_if(v.begin(), v.end(), f);
+      return it == v.end() ? std::nullopt : std::make_optional(it);
+    }
+
+    template <IsEnum E>
+    bool ec(E e) const {
+      return find([&](const Error &error) { return error.ec(e); }).has_value();
+    }
 
     std::deque<Error> v;
   };
