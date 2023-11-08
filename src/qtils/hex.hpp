@@ -43,7 +43,7 @@ struct fmt::formatter<qtils::BytesIn> {
   auto format(const qtils::BytesIn bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
-      out = fmt::format_to(out, "0x");
+      out = fmt::detail::write(out, "0x");
     }
     constexpr size_t kHead = 2, kTail = 2, kSmall = 1;
     if (full or bytes.size() <= kHead + kTail + kSmall) {
