@@ -52,7 +52,7 @@ namespace qtils::error {
    public:
     Error(const ErrorLocation &location, const char *error)
         : error_{error},
-          error_format_{+[](fmt::format_context &ctx, const std::any &error) {
+          error_format_{[](fmt::format_context &ctx, const std::any &error) {
             return fmt::format_to(
                 ctx.out(), "{}", std::any_cast<const char *>(error));
           }},
@@ -61,7 +61,7 @@ namespace qtils::error {
     Error(const ErrorLocation &location, E error)
       requires(not MakeErrorCode<E>)
         : error_{error},
-          error_format_{+[](fmt::format_context &ctx, const std::any &any) {
+          error_format_{[](fmt::format_context &ctx, const std::any &any) {
             auto &error = std::any_cast<const E &>(any);
             if constexpr (fmt::is_formattable<E>::value) {
               return fmt::format_to(ctx.out(), "{}", error);
@@ -75,7 +75,7 @@ namespace qtils::error {
         : Error{location, make_error_code(error)} {}
     Error(const ErrorLocation &location, const std::error_code &error)
         : error_{error},
-          error_format_{+[](fmt::format_context &ctx, const std::any &any) {
+          error_format_{[](fmt::format_context &ctx, const std::any &any) {
             return [&](auto &error) {
               if constexpr (fmt::is_formattable<std::error_code>::value) {
                 return fmt::format_to(ctx.out(), "{}", error);
