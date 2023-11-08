@@ -94,8 +94,13 @@ namespace qtils::error {
       return std::any_cast<T>(&error_);
     }
 
+    template <typename T>
+    OptRef<const T> as() const {
+      return std::any_cast<T>(&error_);
+    }
+
     template <IsEnum E>
-    std::optional<E> ec() {
+    std::optional<E> ec() const {
       if (auto ec = as<std::error_code>()) {
         static auto &category = make_error_code(E{}).category();
         if (ec->category() == category) {
