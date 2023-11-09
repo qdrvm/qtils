@@ -38,14 +38,14 @@ namespace qtils {
   }
 #define Q_ENUM_ERROR_CODE(E) \
   _Q_MAKE_ERROR_CODE(E)      \
-  inline auto errorCodeMessage(const E &e)
+  inline auto errorCodeMessage(E e)
 
 // - - - - - - -
 // compatibility
 // v v v v v v v
 
 #define _OUTCOME_ERROR_CODE_MESSAGE(E, ns, e) \
-  std::string ns errorCodeMessage(const E &e)
+  std::string ns errorCodeMessage(E e)
 #define OUTCOME_HPP_DECLARE_ERROR(ns, E) \
   namespace ns {                         \
     _Q_MAKE_ERROR_CODE(E)                \
