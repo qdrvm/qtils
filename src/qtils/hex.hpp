@@ -40,7 +40,7 @@ struct fmt::formatter<qtils::BytesIn> {
     }
     fmt::throw_format_error("\"x\" or \"0x\" expected");
   }
-  auto format(const qtils::BytesIn bytes, format_context &ctx) const {
+  auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
       out = fmt::detail::write(out, "0x");

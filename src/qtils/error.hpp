@@ -9,11 +9,26 @@
 #include <any>
 #include <cstdint>
 #include <deque>
+#include <ranges>
 #include <system_error>
 
 #include <fmt/format.h>
 
 #include <qtils/optref.hpp>
+
+template <>
+struct fmt::formatter<std::error_code> {
+  static constexpr auto parse(format_parse_context &ctx) {
+    return ctx.begin();
+  }
+  static auto format(const std::error_code &error, format_context &ctx) {
+    return fmt::format_to(ctx.out(),
+        "{}({}) {}",
+        error.category().name(),
+        error.value(),
+        error.message());
+  }
+};
 
 #define Q_ERROR_LOCATION \
   (::qtils::ErrorLocation{__PRETTY_FUNCTION__, __FILE__, __LINE__})
@@ -39,17 +54,10 @@ namespace qtils::error {
         ctx.out(), "{}({})", typeid(E).name(), fmt::underlying(error));
   }
 
-  inline fmt::format_context::iterator formatEc(
-      fmt::format_context &ctx, const std::error_code &error) {
-    return fmt::format_to(ctx.out(),
-        "{}({}) {}",
-        error.category().name(),
-        error.value(),
-        error.message());
-  }
-
   class Error {
    public:
+    Error(const ErrorLocation &location, nullptr_t)
+        : error_format_{nullptr}, location_{location} {}
     Error(const ErrorLocation &location, const char *error)
         : error_{error},
           error_format_{[](fmt::format_context &ctx, const std::any &error) {
@@ -76,17 +84,17 @@ namespace qtils::error {
     Error(const ErrorLocation &location, const std::error_code &error)
         : error_{error},
           error_format_{[](fmt::format_context &ctx, const std::any &any) {
-            return [&](auto &error) {
-              if constexpr (fmt::is_formattable<std::error_code>::value) {
-                return fmt::format_to(ctx.out(), "{}", error);
-              }
-              return formatEc(ctx, error);
-            }(std::any_cast<const std::error_code &>(any));
+            return fmt::format_to(
+                ctx.out(), "{}", std::any_cast<const std::error_code &>(any));
           }},
           location_{location} {}
 
     const ErrorLocation &location() const {
       return location_;
+    }
+
+    bool isNull() const {
+      return error_format_ == nullptr;
     }
 
     template <typename T>
@@ -164,6 +172,22 @@ struct fmt::formatter<qtils::Error> {
     return ctx.begin();
   }
   static auto format(const qtils::Error &error, format_context &ctx) {
+    if (error.isNull()) {
+      return ctx.out();
+    }
     return error.error_format_(ctx, error.error_);
+  }
+};
+
+template <>
+struct fmt::formatter<qtils::Errors> {
+  static constexpr auto parse(format_parse_context &ctx) {
+    return ctx.begin();
+  }
+  static auto format(const qtils::Errors &errors, format_context &ctx) {
+    auto r = errors.v | std::views::filter([](const qtils::Error &e) {
+      return not e.isNull();
+    });
+    return fmt::format_to(ctx.out(), "{}", fmt::join(r, "; "));
   }
 };

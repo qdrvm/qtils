@@ -39,8 +39,7 @@ namespace qtils {
 // compatibility
 // v v v v v v v
 
-#define _OUTCOME_TRY_void(tmp, expr) \
-  _Q_TRY_void(tmp, , expr, Q_ERROR("OUTCOME_TRY"))
+#define _OUTCOME_TRY_void(tmp, expr) _Q_TRY_void(tmp, , expr, Q_ERROR(nullptr))
 #define _BOOST_OUTCOME_TRY(tmp, out, expr) \
   _OUTCOME_TRY_void(tmp, expr) out = std::move(tmp).value()
 #define _OUTCOME_TRY_out(tmp, out, expr) \
