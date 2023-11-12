@@ -51,4 +51,8 @@ namespace qtils {
     }
     return t;
   }
+
+  auto operator""_unhex(const char *c, size_t s) {
+    return unhex(std::string_view{c, s}).value();
+  }
 }  // namespace qtils
