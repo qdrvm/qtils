@@ -14,23 +14,20 @@ template <>
 struct fmt::formatter<qtils::BytesIn> {
   bool prefix = true;
   bool full = false;
+  bool lower = true;
   constexpr auto parse(format_parse_context &ctx) {
     auto it = ctx.begin();
     auto end = [&] { return it == ctx.end() or *it == '}'; };
     if (end()) {
       return it;
     }
-    if (*it == 'x') {
+    prefix = *it == '0';
+    if (prefix) {
       ++it;
-      prefix = false;
-      full = true;
-      if (end()) {
-        return it;
-      }
-    } else if (*it == '0') {
-      ++it;
-      prefix = true;
-      if (not end() and *it == 'x') {
+    }
+    if (not end()) {
+      lower = *it == 'x';
+      if (lower or *it == 'X') {
         ++it;
         full = true;
         if (end()) {
@@ -38,7 +35,7 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
-    fmt::throw_format_error("\"x\" or \"0x\" expected");
+    fmt::throw_format_error("\"x\"/\"X\" or \"0x\"/\"0X\" expected");
   }
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
     auto out = ctx.out();
@@ -47,7 +44,8 @@ struct fmt::formatter<qtils::BytesIn> {
     }
     constexpr size_t kHead = 2, kTail = 2, kSmall = 1;
     if (full or bytes.size() <= kHead + kTail + kSmall) {
-      return fmt::format_to(out, "{:02x}", fmt::join(bytes, ""));
+      return lower ? fmt::format_to(out, "{:02x}", fmt::join(bytes, ""))
+                   : fmt::format_to(out, "{:02X}", fmt::join(bytes, ""));
     }
     return fmt::format_to(out,
         "{:02x}…{:02x}",
