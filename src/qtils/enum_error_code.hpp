@@ -36,9 +36,11 @@ namespace qtils {
   inline std::error_code make_error_code(const E &e) {                  \
     return {static_cast<int>(e), ::qtils::EnumErrorCategory<E>::get()}; \
   }
-#define Q_ENUM_ERROR_CODE(E) \
-  _Q_MAKE_ERROR_CODE(E)      \
-  inline auto errorCodeMessage(E e)
+#define _Q_ENUM_ERROR_CODE(friend_, E) \
+  friend_ _Q_MAKE_ERROR_CODE(E)        \
+  friend_ inline auto errorCodeMessage(E e)
+#define Q_ENUM_ERROR_CODE(E) _Q_ENUM_ERROR_CODE(, E)
+#define Q_ENUM_ERROR_CODE_FRIEND(E) _Q_ENUM_ERROR_CODE(friend, E)
 
 // - - - - - - -
 // compatibility
@@ -46,10 +48,15 @@ namespace qtils {
 
 #define _OUTCOME_ERROR_CODE_MESSAGE(E, ns, e) \
   std::string ns errorCodeMessage(E e)
+#define _OUTCOME_HPP_DECLARE_ERROR(friend_, E) \
+  friend_ _Q_MAKE_ERROR_CODE(E)                \
+  friend_ _OUTCOME_ERROR_CODE_MESSAGE(E, , );
+#define OUTCOME_HPP_DECLARE_ERROR_1(E) _OUTCOME_HPP_DECLARE_ERROR(, E)
+#define OUTCOME_HPP_DECLARE_ERROR_FRIEND(E) \
+  _OUTCOME_HPP_DECLARE_ERROR(friend, E)
 #define OUTCOME_HPP_DECLARE_ERROR(ns, E) \
   namespace ns {                         \
-    _Q_MAKE_ERROR_CODE(E)                \
-    _OUTCOME_ERROR_CODE_MESSAGE(E, , );  \
+    _OUTCOME_HPP_DECLARE_ERROR(, E)      \
   }
 #define OUTCOME_CPP_DEFINE_CATEGORY(ns, E, e) \
   _OUTCOME_ERROR_CODE_MESSAGE(E, ns::, e)
