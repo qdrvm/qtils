@@ -18,6 +18,10 @@ namespace qtils {
     auto c = l.size() <=> r.size();
     return c != 0 ? c : std::memcmp(l.data(), r.data(), l.size()) <=> 0;
   }
+  bool operator==(const AsBytes auto &l_, const AsBytes auto &r_) {
+    return (l_ <=> r_) == 0;
+  }
 }  // namespace qtils
 
 using qtils::operator<=>;
+using qtils::operator==;
