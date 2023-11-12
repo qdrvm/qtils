@@ -9,7 +9,6 @@
 #include <any>
 #include <cstdint>
 #include <deque>
-#include <ranges>
 #include <system_error>
 
 #include <fmt/format.h>
@@ -185,9 +184,19 @@ struct fmt::formatter<qtils::Errors> {
     return ctx.begin();
   }
   static auto format(const qtils::Errors &errors, format_context &ctx) {
-    auto r = errors.v | std::views::filter([](const qtils::Error &e) {
-      return not e.isNull();
-    });
-    return fmt::format_to(ctx.out(), "{}", fmt::join(r, "; "));
+    auto out = ctx.out();
+    bool first = true;
+    for (auto &error : errors.v) {
+      if (error.isNull()) {
+        continue;
+      }
+      if (first) {
+        first = false;
+      } else {
+        out = fmt::detail::write(out, "; ");
+      }
+      out = fmt::format_to(out, "{}", error);
+    }
+    return out;
   }
 };
