@@ -56,7 +56,7 @@ namespace qtils::error {
 
   class Error {
    public:
-    Error(const ErrorLocation &location, nullptr_t)
+    Error(const ErrorLocation &location, std::nullptr_t)
         : error_format_{nullptr}, location_{location} {}
     Error(const ErrorLocation &location, const char *error)
         : error_{error},
