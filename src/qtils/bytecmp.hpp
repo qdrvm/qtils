@@ -15,8 +15,9 @@ namespace qtils {
 
   auto operator<=>(const AsBytes auto &l_, const AsBytes auto &r_) {
     BytesIn l{l_}, r{r_};
-    auto c = l.size() <=> r.size();
-    return c != 0 ? c : std::memcmp(l.data(), r.data(), l.size()) <=> 0;
+    auto n = l.size() < r.size() ? l.size() : r.size();
+    auto c = std::memcmp(l.data(), r.data(), n) <=> 0;
+    return c != 0 ? c : l.size() <=> r.size();
   }
   bool operator==(const AsBytes auto &l_, const AsBytes auto &r_) {
     return (l_ <=> r_) == 0;
