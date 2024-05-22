@@ -9,12 +9,16 @@
 #include <fmt/format.h>
 #include <system_error>
 
+namespace boost::system {
+  class error_code;
+}  // namespace boost::system
+
 template <>
 struct fmt::formatter<std::error_code> {
   static constexpr auto parse(format_parse_context &ctx) {
     return ctx.begin();
   }
-  static auto format(const std::error_code &error, format_context &ctx) {
+  static auto format(const auto &error, format_context &ctx) {
     return fmt::format_to(ctx.out(),
         "{}({}) {}",
         error.category().name(),
@@ -22,3 +26,7 @@ struct fmt::formatter<std::error_code> {
         error.message());
   }
 };
+
+template <>
+struct fmt::formatter<boost::system::error_code>
+    : fmt::formatter<std::error_code> {};
