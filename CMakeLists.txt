@@ -12,8 +12,8 @@ endif()
 
 include(cmake/HunterGate.cmake)
 HunterGate(
-    URL  https://github.com/qdrvm/hunter/archive/refs/tags/v0.23.257-qdrvm11.tar.gz
-    SHA1 b2a69ae501bdc99006fb86e55930640004468556
+    URL  https://github.com/qdrvm/hunter/archive/refs/tags/v0.25.3-qdrvm11.zip
+    SHA1 20620ee1e2e9738b2d4561be2622d71e8c73bee9
 )
 
 project(qtils LANGUAGES CXX VERSION 0.0.1)
