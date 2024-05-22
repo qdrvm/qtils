@@ -39,8 +39,8 @@ namespace qtils {
     abort();
   }
 
-  template <typename T = Bytes>
-  outcome::result<T> unhex(std::string_view s) {
+  template <typename T>
+  outcome::result<void> unhex(T &t, std::string_view s) {
     if (s.starts_with("0x")) {
       return UnhexError::UNEXPECTED_0X;
     }
@@ -48,7 +48,6 @@ namespace qtils {
       return UnhexError::ODD_LENGTH;
     }
     auto count = s.size() / 2;
-    T t;
     if constexpr (requires(T t) { t.resize(size_t{}); }) {
       t.resize(count);
     } else {
@@ -64,17 +63,32 @@ namespace qtils {
     } catch (const boost::algorithm::non_hex_input &) {
       return UnhexError::NON_HEX;
     }
-    return t;
+    return outcome::success();
   }
 
   template <typename T = Bytes>
-  outcome::result<T> unhex0x(std::string_view s, bool optional_0x = false) {
+  outcome::result<T> unhex(std::string_view s) {
+    T t;
+    OUTCOME_TRY(unhex(t, s));
+    return t;
+  }
+
+  template <typename T>
+  outcome::result<void> unhex0x(
+      T &t, std::string_view s, bool optional_0x = false) {
     if (s.starts_with("0x")) {
       s.remove_prefix(2);
     } else if (not optional_0x) {
       return UnhexError::REQUIRED_0X;
     }
-    return unhex<T>(s);
+    return unhex<T>(t, s);
+  }
+
+  template <typename T = Bytes>
+  outcome::result<T> unhex0x(std::string_view s) {
+    T t;
+    OUTCOME_TRY(unhex0x(t, s));
+    return t;
   }
 
   inline auto operator""_unhex(const char *c, size_t s) {
