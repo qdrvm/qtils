@@ -48,7 +48,7 @@ namespace qtils {
       return UnhexError::ODD_LENGTH;
     }
     auto count = s.size() / 2;
-    if constexpr (requires(T t) { t.resize(size_t{}); }) {
+    if constexpr (requires { t.resize(size_t{}); }) {
       t.resize(count);
     } else {
       if (count < t.size()) {
