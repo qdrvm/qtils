@@ -47,6 +47,6 @@ install(DIRECTORY src/qtils
 )
 install(TARGETS qtils EXPORT qtils-config)
 install(EXPORT qtils-config
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/qtils
+    DESTINATION share/qtils
     NAMESPACE qtils::
 )

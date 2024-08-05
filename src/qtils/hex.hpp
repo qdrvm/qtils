@@ -7,6 +7,9 @@
 #pragma once
 
 #include <fmt/format.h>
+#if __has_include(<fmt/ranges.h>)
+#include <fmt/ranges.h>
+#endif
 
 #include <qtils/bytes.hpp>
 
