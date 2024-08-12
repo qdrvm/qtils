@@ -13,6 +13,16 @@ namespace boost::system {
   class error_code;
 }  // namespace boost::system
 
+namespace qtils {
+  std::error_code asError(const auto &e) {
+    if constexpr (requires { std::error_code{e}; }) {
+      return std::error_code{e};
+    } else {
+      return make_error_code(e);
+    }
+  }
+}  // namespace qtils
+
 template <>
 struct fmt::formatter<std::error_code> {
   static constexpr auto parse(format_parse_context &ctx) {
