@@ -17,4 +17,11 @@ namespace qtils {
   using BytesN = std::array<uint8_t, N>;
   using BytesIn = std::span<const uint8_t>;
   using BytesOut = std::span<uint8_t>;
+
+  template <typename T>
+  concept AsBytes = requires(const T &t) { BytesIn{t}; };
+
+  inline Bytes asVec(BytesIn v) {
+    return {v.begin(), v.end()};
+  }
 }  // namespace qtils
