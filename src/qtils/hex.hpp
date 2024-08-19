@@ -6,12 +6,14 @@
 
 #pragma once
 
-#include <fmt/format.h>
-#if __has_include(<fmt/ranges.h>)
 #include <fmt/ranges.h>
-#endif
-
 #include <qtils/bytes.hpp>
+
+namespace qtils {
+  struct Hex {
+    qtils::BytesIn v;
+  };
+}  // namespace qtils
 
 template <>
 struct fmt::formatter<qtils::BytesIn> {
@@ -58,7 +60,17 @@ struct fmt::formatter<qtils::BytesIn> {
 };
 template <>
 struct fmt::formatter<qtils::Bytes> : fmt::formatter<qtils::BytesIn> {};
-template <size_t N>
-struct fmt::formatter<qtils::BytesN<N>> : fmt::formatter<qtils::BytesIn> {};
 template <>
 struct fmt::formatter<qtils::BytesOut> : fmt::formatter<qtils::BytesIn> {};
+template <>
+struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
+  auto format(const qtils::Hex &v, format_context &ctx) const {
+    return formatter<qtils::BytesIn>::format(v.v, ctx);
+  }
+};
+
+// conflicts with `formatter<is_tuple_like>` from <fmt/ranges.h>
+template <size_t N>
+struct fmt::formatter<qtils::BytesN<N>> {
+  formatter() = delete;
+};
