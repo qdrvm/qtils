@@ -24,10 +24,10 @@ namespace qtils::cxx23 {
     size_t size = fwrite(str.data(), 1, str.size(), stream);
     if (size < str.size()) {
       if (std::feof(stream)) {
-        throw std::system_error(EIO, "EOF while writing the formatted output");
+        throw std::system_error(EIO, std::system_category(), "EOF while writing the formatted output");
       }
       throw std::system_error(
-          std::ferror(stream), "failed to write formatted output");
+          std::ferror(stream), std::system_category(), "failed to write formatted output");
     }
   }
 
