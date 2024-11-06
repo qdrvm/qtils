@@ -14,10 +14,9 @@
 #define OUTCOME_UNIQUE _OUTCOME_UNIQUE(outcome_unique_, __COUNTER__)
 
 namespace qtils {
-  template <typename R>
-  using Outcome = boost::outcome_v2::basic_result<R,
-      std::error_code,
-      boost::outcome_v2::policy::default_policy<R, std::error_code, void>>;
+  template <typename T, typename E = std::error_code>
+  using Result = boost::outcome_v2::
+      basic_result<T, E, boost::outcome_v2::policy::default_policy<T, E, void>>;
 }  // namespace qtils
 
 // - - - - - - -
@@ -41,7 +40,7 @@ namespace qtils {
 
 namespace outcome {
   template <class R>
-  using result = qtils::Outcome<R>;
+  using result = qtils::Result<R>;
   using boost::outcome_v2::failure;
   using boost::outcome_v2::success;
 }  // namespace outcome
