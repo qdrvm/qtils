@@ -54,6 +54,7 @@ install(EXPORT qtils-config
     DESTINATION share/qtils
     NAMESPACE qtils::
 )
+install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_PREFIX}/share/qtils/copyright)
 
 if (QTILS_BUILD_TESTS)
     enable_testing()
