@@ -7,25 +7,33 @@
 #pragma once
 
 #include <type_traits>
+#include <version>
+
+//
+// Placeholder while qtils is used in projects without C++23 support
+//
 
 namespace qtils::cxx23 {
-  template <typename _Tp, typename _Up>
+  template <typename T, typename U>
   [[nodiscard]]
-  constexpr decltype(auto) forward_like(_Up &&__x) noexcept {
-    constexpr bool __as_rval = std::is_rvalue_reference_v<_Tp &&>;
+  #if defined(__cpp_lib_forward_like) && __cpp_lib_forward_like >=	202207L
+    [[deprecated("Use std::forward_like")]]
+  #endif
+  constexpr decltype(auto) forward_like(U &&x) noexcept {
+    constexpr bool as_rval = std::is_rvalue_reference_v<T &&>;
 
-    if constexpr (std::is_const_v<std::remove_reference_t<_Tp>>) {
-      using _Up2 = std::remove_reference_t<_Up>;
-      if constexpr (__as_rval) {
-        return static_cast<const _Up2 &&>(__x);
+    if constexpr (std::is_const_v<std::remove_reference_t<T>>) {
+      using U2 = std::remove_reference_t<U>;
+      if constexpr (as_rval) {
+        return static_cast<const U2 &&>(x);
       } else {
-        return static_cast<const _Up2 &>(__x);
+        return static_cast<const U2 &>(x);
       }
     } else {
-      if constexpr (__as_rval) {
-        return static_cast<std::remove_reference_t<_Up> &&>(__x);
+      if constexpr (as_rval) {
+        return static_cast<std::remove_reference_t<U> &&>(x);
       } else {
-        return static_cast<_Up &>(__x);
+        return static_cast<U &>(x);
       }
     }
   }

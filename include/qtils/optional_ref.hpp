@@ -14,6 +14,9 @@
 
 namespace qtils {
 
+  /**
+   * std::optional-like class that contains a pointer to some object
+   */
   template <typename T>
   class OptionalRef {
    public:

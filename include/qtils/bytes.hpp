@@ -40,6 +40,11 @@ namespace qtils {
     return {v.begin(), v.end()};
   }
 
+  /**
+   * Fixed-capacity vector meant to be allocated on stack
+   * Used to avoid heap allocations for small vectors with known capacity
+   * @tparam N - maximum capacity
+   */
   template <size_t N>
   struct FixedByteVector {
     BytesN<N> data;
@@ -62,7 +67,12 @@ namespace qtils {
         reinterpret_cast<const char *>(span.data()), span.size()};
   }
 
-
+  /**
+   * A span-like class that indexes the underlying byte span by bits.
+   *
+   * @tparam T - type of the underlying span values, should be tweaked mostly
+   * when a non-const span is needed
+   */
   template <std::unsigned_integral T = const unsigned char>
   struct BitSpan {
     std::span<T> bytes;
@@ -104,7 +114,7 @@ namespace qtils {
     uint8_t operator[](size_t bit_idx) const {
       QTILS_ASSERT_LESS(start_bit + bit_idx, end_bit);
       return (bytes[(start_bit + bit_idx) / 8] >> ((start_bit + bit_idx) % 8))
-           & 0x1;
+          & 0x1;
     }
 
     uint8_t get_as_byte(size_t offset_bits, size_t len_bits) const {
@@ -119,8 +129,8 @@ namespace qtils {
         return (bytes[first_byte] >> (start % 8)) & ((1 << len_bits) - 1);
       }
       return ((bytes[first_byte] >> (start % 8))
-              | (bytes[second_byte] << (8 - start % 8)))
-           & ((1 << len_bits) - 1);
+                 | (bytes[second_byte] << (8 - start % 8)))
+          & ((1 << len_bits) - 1);
     }
 
     template <typename U = T>
@@ -156,7 +166,7 @@ namespace qtils {
       bool operator==(const const_iterator &other) const {
         return span->bytes.data() + span->start_bit + current_bit
             == other.span->bytes.data() + +other.span->start_bit
-                   + other.current_bit;
+            + other.current_bit;
       }
     };
     static_assert(std::input_or_output_iterator<const_iterator>);
@@ -195,7 +205,6 @@ namespace qtils {
   static_assert(std::ranges::range<BitSpan<>>);
   static_assert(std::ranges::range<BitSpan<unsigned char>>);
 
-
   inline std::string hex(ByteSpan span) {
     std::string s(span.size() * 2, '\0');
     for (size_t i = 0; i < span.size(); i++) {
@@ -205,7 +214,6 @@ namespace qtils {
     }
     return s;
   }
-
 
   template <size_t N>
   BytesN<N> array_from_span(ByteSpan span) {
@@ -220,12 +228,11 @@ namespace qtils {
     BytesN<N> array;
     const auto s = std::min(N, span.size());
     std::ranges::copy_n(span.begin(), s, array.begin());
-    std::ranges::fill(std::ranges::subrange(array.begin() + s, array.end()),
-                      filler);
+    std::ranges::fill(
+        std::ranges::subrange(array.begin() + s, array.end()), filler);
     return array;
   }
 }  // namespace qtils
-
 
 template <typename T>
 struct std::formatter<qtils::BitSpan<T>, char> {
@@ -276,8 +283,7 @@ struct std::formatter<qtils::Bytes, char> {
   }
 
   template <class FmtContext>
-  FmtContext::iterator format(const qtils::Bytes &v,
-                              FmtContext &ctx) const {
+  FmtContext::iterator format(const qtils::Bytes &v, FmtContext &ctx) const {
     auto out = ctx.out();
     for (auto i : qtils::ByteSpan{v}.subspan(0, v.size() - 1)) {
       std::format_to(out, "{:02x}", i);
@@ -298,8 +304,8 @@ struct std::formatter<qtils::BytesN<N>, char> {
   }
 
   template <class FmtContext>
-  FmtContext::iterator format(const qtils::BytesN<N> &s,
-                              FmtContext &ctx) const {
+  FmtContext::iterator format(
+      const qtils::BytesN<N> &s, FmtContext &ctx) const {
     auto out = ctx.out();
     std::format_to(out, "{}", qtils::ByteSpan{s});
     return out;
