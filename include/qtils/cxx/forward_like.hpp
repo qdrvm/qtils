@@ -14,15 +14,18 @@
 //
 
 namespace qtils::cxx23 {
+
+#if defined(__cpp_lib_forward_like) && __cpp_lib_forward_like >= 202207L
+
+  using std::forward_like;
+
+#else
   template <typename T, typename U>
   [[nodiscard]]
-  #if defined(__cpp_lib_forward_like) && __cpp_lib_forward_like >=	202207L
-    [[deprecated("Use std::forward_like")]]
-  #endif
   constexpr decltype(auto) forward_like(U &&x) noexcept {
     constexpr bool as_rval = std::is_rvalue_reference_v<T &&>;
 
-    if constexpr (std::is_const_v<std::remove_reference_t<T>>) {
+    if constexpr (std::is_const_v<std::remove_reference_t<T> >) {
       using U2 = std::remove_reference_t<U>;
       if constexpr (as_rval) {
         return static_cast<const U2 &&>(x);
@@ -37,4 +40,6 @@ namespace qtils::cxx23 {
       }
     }
   }
+#endif
+
 }  // namespace qtils::cxx23

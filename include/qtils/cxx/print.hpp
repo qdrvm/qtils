@@ -6,29 +6,32 @@
 
 #pragma once
 
-#include <cstdio>
-#include <format>
-#include <iostream>
-
 //
 // Placeholder while qtils is used in projects without C++23 support
 // Not completely standard-compliant, but will do for our needs
 //
 
+#if defined(__cpp_lib_print) && __cpp_lib_print >= 202207L
+
+#include <print>
+
+namespace qtils::cxx23 {
+  using std::print;
+}  // namespace qtils::cxx23
+
+#else
+
+#include <cstdio>
+#include <format>
+#include <iostream>
 namespace qtils::cxx23 {
 
   template <class... Args>
-#if defined(__cpp_lib_print) && __cpp_lib_print >= 202207L
-  [[deprecated("Use std::print")]]
-#endif
   void print(std::format_string<Args...> fmt, Args &&...args) {
     print(stdout, fmt, std::forward<Args>(args)...);
   }
 
   template <class... Args>
-#if defined(__cpp_lib_print) && __cpp_lib_print >= 202207L
-  [[deprecated("Use std::print")]]
-#endif
   void print(
       std::FILE *stream, std::format_string<Args...> fmt, Args &&...args) {
     std::string str = std::format(fmt, std::forward<Args>(args)...);
@@ -46,12 +49,10 @@ namespace qtils::cxx23 {
   }
 
   template <class... Args>
-#if defined(__cpp_lib_print) && __cpp_lib_print >= 202207L
-  [[deprecated("Use std::print")]]
-#endif
   void print(
       std::ostream &os, std::format_string<Args...> fmt, Args &&...args) {
     os << std::vformat(os.getloc(), fmt.get(), std::make_format_args(args...));
   }
-
 }  // namespace qtils::cxx23
+
+#endif
