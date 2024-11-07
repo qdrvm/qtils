@@ -13,7 +13,7 @@
 #include <format>
 #include <iostream>
 #include <print>
-#include <ranges>
+#include <algorithm>
 #include <source_location>
 #include <string_view>
 
