@@ -107,33 +107,12 @@ namespace qtils {
   };
 
   template <typename T>
-  inline void expect(const OptionalRef<T> &expected,
+  void expect(const OptionalRef<T> &expected,
       std::string_view expression,
       std::source_location loc = std::source_location::current()) {
-    if (!expected) {
+    if (not expected) {
       print_and_abort(
           std::format("'{}' does not contain a value", expression), loc);
     }
   }
 }  // namespace qtils
-
-template <typename T>
-struct std::formatter<qtils::OptionalRef<T>, char> {
-  template <class ParseContext>
-  constexpr ParseContext::iterator parse(ParseContext &ctx) {
-    auto it = ctx.begin();
-    return it;
-  }
-
-  template <class FmtContext>
-  FmtContext::iterator format(
-      qtils::OptionalRef<T> opt, FmtContext &ctx) const {
-    auto out = ctx.out();
-    if (opt) {
-      std::format_to(out, "{}", *opt);
-    } else {
-      std::format_to(out, "nullopt");
-    }
-    return out;
-  }
-};

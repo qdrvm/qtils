@@ -24,6 +24,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+include(GNUInstallDirs)
+
 option(QTILS_BUILD_TESTS "Build tests" OFF)
 
 hunter_add_package(Boost)
@@ -36,16 +38,12 @@ target_link_libraries(qtils INTERFACE
     Boost::boost
     fmt::fmt
 )
-
-
-include(GNUInstallDirs)
-
 target_include_directories(qtils INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-install(DIRECTORY include/qtils
+install(DIRECTORY src/qtils
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.hpp"
 )

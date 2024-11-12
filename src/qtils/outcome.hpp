@@ -7,15 +7,13 @@
 #pragma once
 
 #include <boost/outcome/result.hpp>
-#include <qtils/error.hpp>
 
-#define _OUTCOME_UNIQUE_2(x, y) x##y
-#define _OUTCOME_UNIQUE(x, y) _OUTCOME_UNIQUE_2(x, y)
-#define OUTCOME_UNIQUE _OUTCOME_UNIQUE(outcome_unique_, __COUNTER__)
+#include <qtils/error.hpp>
+#include <qtils/unique.hpp>
 
 namespace qtils {
   template <typename T, typename E = std::error_code>
-  using Result = boost::outcome_v2::
+  using Outcome = boost::outcome_v2::
       basic_result<T, E, boost::outcome_v2::policy::default_policy<T, E, void>>;
 }  // namespace qtils
 
@@ -30,17 +28,16 @@ namespace qtils {
   }
 #define _BOOST_OUTCOME_TRY(tmp, out, expr) \
   _OUTCOME_TRY_void(tmp, expr) out = std::move(tmp).value()
-#define BOOST_OUTCOME_TRY(out, expr) \
-  _BOOST_OUTCOME_TRY(OUTCOME_UNIQUE, out, expr)
+#define BOOST_OUTCOME_TRY(out, expr) _BOOST_OUTCOME_TRY(QTILS_UNIQUE, out, expr)
 #define _OUTCOME_TRY_out(tmp, out, expr) \
   _BOOST_OUTCOME_TRY(tmp, auto &&out, expr)
 #define _OUTCOME_OVERLOAD(_1, _2, s, ...) _OUTCOME_TRY_##s
 #define OUTCOME_TRY(...) \
-  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(OUTCOME_UNIQUE, __VA_ARGS__)
+  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(QTILS_UNIQUE, __VA_ARGS__)
 
 namespace outcome {
   template <class R>
-  using result = qtils::Result<R>;
+  using result = qtils::Outcome<R>;
   using boost::outcome_v2::failure;
   using boost::outcome_v2::success;
 }  // namespace outcome

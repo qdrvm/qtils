@@ -10,17 +10,15 @@
 #include <expected>
 #endif
 
+#include <algorithm>
 #include <format>
 #include <iostream>
-#include <print>
-#include <algorithm>
 #include <source_location>
 #include <string_view>
 
-#include <qtils/cxx/print.hpp>
+#include <qtils/cxx23/print.hpp>
 
 namespace qtils {
-
   inline void print_and_abort(std::string_view message,
       std::source_location loc = std::source_location::current()) {
     cxx23::print(std::cerr,
@@ -35,7 +33,7 @@ namespace qtils {
   inline void expect(bool condition,
       std::string_view message,
       std::source_location loc = std::source_location::current()) {
-    if (!condition) {
+    if (not condition) {
       print_and_abort(message, loc);
     }
   }
@@ -45,7 +43,7 @@ namespace qtils {
   inline void expect(const std::expected<T, E> &expected,
       std::string_view expression,
       std::source_location loc = std::source_location::current()) {
-    if (!expected) {
+    if (not expected) {
       print_and_abort(std::format("'{}' contains an unexpected result '{}'",
                           expression,
                           expected.error()),
@@ -59,7 +57,7 @@ namespace qtils {
       const B &b,
       std::string_view sign,
       std::source_location loc = std::source_location::current()) {
-    if (!Cmp{}(a, b)) {
+    if (not Cmp{}(a, b)) {
       print_and_abort(std::format("{} {} {}", a, sign, b), loc);
     }
   }
@@ -68,7 +66,7 @@ namespace qtils {
   void expect_range_eq(A &&a,
       B &&b,
       std::source_location loc = std::source_location::current()) {
-    if (!std::ranges::equal(a, b)) {
+    if (not std::ranges::equal(a, b)) {
       print_and_abort(std::format("{} == {}", a, b), loc);
     }
   }

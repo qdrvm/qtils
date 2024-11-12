@@ -24,8 +24,8 @@ namespace qtils::cxx23 {
 #include <cstdio>
 #include <format>
 #include <iostream>
-namespace qtils::cxx23 {
 
+namespace qtils::cxx23 {
   template <class... Args>
   void print(std::format_string<Args...> fmt, Args &&...args) {
     print(stdout, fmt, std::forward<Args>(args)...);
