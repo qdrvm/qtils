@@ -31,4 +31,4 @@
     return std::unexpected(unwrap_res.error()); \
   }
 
-#define QTILS_UNWRAP_void(expr) QTILS_UNWRAP_void_2(QTILS_UNWRAP_NAME)
+#define QTILS_UNWRAP_void(expr) QTILS_UNWRAP_void_2(QTILS_UNWRAP_NAME, expr)
