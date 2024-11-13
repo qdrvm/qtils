@@ -7,6 +7,7 @@
 #pragma once
 
 #include <fmt/ranges.h>
+
 #include <qtils/bytes.hpp>
 
 namespace qtils {

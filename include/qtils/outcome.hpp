@@ -7,6 +7,7 @@
 #pragma once
 
 #include <boost/outcome/result.hpp>
+
 #include <qtils/error.hpp>
 
 #define _OUTCOME_UNIQUE_2(x, y) x##y

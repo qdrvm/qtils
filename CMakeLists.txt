@@ -26,6 +26,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(QTILS_BUILD_TESTS "Build tests" OFF)
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(QTILS_ENABLE_ASSERT "Enable assertions" ON)
+else()
+    option(QTILS_ENABLE_ASSERT "Enable assertions" OFF)
+endif()
+
 hunter_add_package(Boost)
 find_package(Boost CONFIG REQUIRED)
 hunter_add_package(fmt)
@@ -36,7 +42,9 @@ target_link_libraries(qtils INTERFACE
     Boost::boost
     fmt::fmt
 )
-
+if (QTILS_ENABLE_ASSERT)
+    target_compile_definitions(qtils INTERFACE QTILS_ENABLE_ASSERT)
+endif()
 
 include(GNUInstallDirs)
 

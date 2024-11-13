@@ -10,14 +10,14 @@
 #include <expected>
 #endif
 
+#include <algorithm>
 #include <format>
 #include <iostream>
 #include <print>
-#include <algorithm>
 #include <source_location>
 #include <string_view>
 
-#include <qtils/cxx/print.hpp>
+#include <qtils/cxx23/print.hpp>
 
 namespace qtils {
 

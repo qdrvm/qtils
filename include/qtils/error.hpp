@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include <fmt/format.h>
 #include <system_error>
+
+#include <fmt/format.h>
 
 namespace boost::system {
   class error_code;

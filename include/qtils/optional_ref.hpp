@@ -107,7 +107,7 @@ namespace qtils {
   };
 
   template <typename T>
-  inline void expect(const OptionalRef<T> &expected,
+  void expect(const OptionalRef<T> &expected,
       std::string_view expression,
       std::source_location loc = std::source_location::current()) {
     if (!expected) {

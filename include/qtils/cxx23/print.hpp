@@ -24,6 +24,7 @@ namespace qtils::cxx23 {
 #include <cstdio>
 #include <format>
 #include <iostream>
+
 namespace qtils::cxx23 {
 
   template <class... Args>
