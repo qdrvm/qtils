@@ -8,11 +8,11 @@
 
 #define IDENTITY(a) a
 
-#define CONCAT__(a, b, c) a##b##c
-#define CONCAT_(a, b, c) CONCAT__(a, b, c)
-#define CONCAT(a, b, c) CONCAT_(IDENTITY(a), IDENTITY(b), IDENTITY(c))
+#define CONCAT__(a, b) a##b
+#define CONCAT_(a, b) CONCAT__(a, b)
+#define CONCAT(a, b) CONCAT_(IDENTITY(a), IDENTITY(b))
 
-#define QTILS_UNIQUE_NAME(prefix) CONCAT(prefix, __func__, __LINE__)
+#define QTILS_UNIQUE_NAME(prefix) CONCAT(prefix, __COUNTER__)
 
 #define QTILS_UNWRAP_NAME QTILS_UNIQUE_NAME(unwrap_res_)
 
