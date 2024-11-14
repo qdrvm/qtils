@@ -49,11 +49,11 @@ endif()
 include(GNUInstallDirs)
 
 target_include_directories(qtils INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-install(DIRECTORY include/qtils
+install(DIRECTORY src/qtils
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.hpp"
 )
