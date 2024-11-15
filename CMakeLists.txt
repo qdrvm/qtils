@@ -79,7 +79,6 @@ if (QTILS_BUILD_TESTS)
 
     file(WRITE "${PROJECT_SOURCE_DIR}/test/qtils_compiles.cpp" "${qtils_compiles_content}")
     
-    message(STATUS "AAAAAAAAA ${headers}")
     add_executable(qtils_compiles test/qtils_compiles.cpp)
     target_link_libraries(qtils_compiles qtils)
 endif()
