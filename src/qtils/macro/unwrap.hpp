@@ -6,13 +6,13 @@
 
 #pragma once
 
-#define IDENTITY(a) a
-
-#define CONCAT__(a, b) a##b
-#define CONCAT_(a, b) CONCAT__(a, b)
-#define CONCAT(a, b) CONCAT_(IDENTITY(a), IDENTITY(b))
-
-#define QTILS_UNIQUE_NAME(prefix) CONCAT(prefix, __COUNTER__)
+/**
+ *  QTILS_UNWRAP - attemps to extract the value from the provided std::expected
+ *      expression and assign it to the provided declaration, returns error if fails.
+ *  QTILS_UNWRAP_void - same as QTILS_UNWRAP, but no assignment (for std::expected<void, E>).
+ */
+ 
+#include <qtils/macro/common.hpp>
 
 #define QTILS_UNWRAP_NAME QTILS_UNIQUE_NAME(unwrap_res_)
 

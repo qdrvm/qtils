@@ -17,6 +17,7 @@ DerivePointerAlignment: false
 FixNamespaceComments: true
 IncludeBlocks: Preserve
 InsertBraces: true
+InsertNewlineAtEOF: true
 InsertTrailingCommas: Wrapped
 NamespaceIndentation: All
 PointerAlignment: Right

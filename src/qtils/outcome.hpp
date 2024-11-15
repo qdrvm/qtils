@@ -9,10 +9,9 @@
 #include <boost/outcome/result.hpp>
 
 #include <qtils/error.hpp>
+#include <qtils/macro/common.hpp>
 
-#define _OUTCOME_UNIQUE_2(x, y) x##y
-#define _OUTCOME_UNIQUE(x, y) _OUTCOME_UNIQUE_2(x, y)
-#define OUTCOME_UNIQUE _OUTCOME_UNIQUE(outcome_unique_, __COUNTER__)
+#define QTILS_OUTCOME_UNIQUE_NAME QTILS_UNIQUE_NAME(outcome_res_)
 
 namespace qtils {
   template <typename T, typename E = std::error_code>
@@ -32,12 +31,12 @@ namespace qtils {
 #define _BOOST_OUTCOME_TRY(tmp, out, expr) \
   _OUTCOME_TRY_void(tmp, expr) out = std::move(tmp).value()
 #define BOOST_OUTCOME_TRY(out, expr) \
-  _BOOST_OUTCOME_TRY(OUTCOME_UNIQUE, out, expr)
+  _BOOST_OUTCOME_TRY(QTILS_OUTCOME_UNIQUE_NAME, out, expr)
 #define _OUTCOME_TRY_out(tmp, out, expr) \
   _BOOST_OUTCOME_TRY(tmp, auto &&out, expr)
 #define _OUTCOME_OVERLOAD(_1, _2, s, ...) _OUTCOME_TRY_##s
 #define OUTCOME_TRY(...) \
-  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(OUTCOME_UNIQUE, __VA_ARGS__)
+  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(QTILS_OUTCOME_UNIQUE_NAME, __VA_ARGS__)
 
 namespace outcome {
   template <class R>

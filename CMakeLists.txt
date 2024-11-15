@@ -67,6 +67,19 @@ install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_PREFIX}/share/qtils/copyright)
 if (QTILS_BUILD_TESTS)
     enable_testing()
 
+    # since it's hard to check locally for a header-only library, generate a file that includes all headers
+    # and check that it compiles
+
+    file(GLOB_RECURSE headers RELATIVE "${PROJECT_SOURCE_DIR}/src/" CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/src/qtils/*.hpp") 
+    set(qtils_compiles_content "// THIS FILE IS GENERATED AUTOMATICALLY\n")
+    foreach(file ${headers})
+        string(APPEND qtils_compiles_content "#include <${file}>\n")
+    endforeach()
+    string(APPEND qtils_compiles_content "int main(){}\n")
+
+    file(WRITE "${PROJECT_SOURCE_DIR}/test/qtils_compiles.cpp" "${qtils_compiles_content}")
+    
+    message(STATUS "AAAAAAAAA ${headers}")
     add_executable(qtils_compiles test/qtils_compiles.cpp)
     target_link_libraries(qtils_compiles qtils)
 endif()

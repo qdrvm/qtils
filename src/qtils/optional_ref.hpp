@@ -132,7 +132,7 @@ struct std::formatter<qtils::OptionalRef<T>, char> {
     if (opt) {
       std::format_to(out, "{}", *opt);
     } else {
-      std::format_to(out, "nullopt");
+      std::format_to(out, "<none>");
     }
     return out;
   }
