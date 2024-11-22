@@ -7,6 +7,7 @@
 #pragma once
 
 #include <fmt/ranges.h>
+
 #include <qtils/bytes.hpp>
 
 namespace qtils {
@@ -20,6 +21,7 @@ struct fmt::formatter<qtils::BytesIn> {
   bool prefix = true;
   bool full = false;
   bool lower = true;
+
   constexpr auto parse(format_parse_context &ctx) {
     auto it = ctx.begin();
     auto end = [&] { return it == ctx.end() or *it == '}'; };
@@ -42,6 +44,7 @@ struct fmt::formatter<qtils::BytesIn> {
     }
     fmt::throw_format_error("\"x\"/\"X\" or \"0x\"/\"0X\" expected");
   }
+  
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
@@ -58,10 +61,13 @@ struct fmt::formatter<qtils::BytesIn> {
         fmt::join(bytes.last(kTail), ""));
   }
 };
+
 template <>
 struct fmt::formatter<qtils::Bytes> : fmt::formatter<qtils::BytesIn> {};
+
 template <>
 struct fmt::formatter<qtils::BytesOut> : fmt::formatter<qtils::BytesIn> {};
+
 template <>
 struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
   auto format(const qtils::Hex &v, format_context &ctx) const {

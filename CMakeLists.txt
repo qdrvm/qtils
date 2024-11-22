@@ -24,7 +24,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include(GNUInstallDirs)
+option(QTILS_BUILD_TESTS "Build tests" OFF)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option(QTILS_ENABLE_ASSERT "Enable assertions" ON)
+else()
+    option(QTILS_ENABLE_ASSERT "Enable assertions" OFF)
+endif()
 
 hunter_add_package(Boost)
 find_package(Boost CONFIG REQUIRED)
@@ -36,8 +42,14 @@ target_link_libraries(qtils INTERFACE
     Boost::boost
     fmt::fmt
 )
+if (QTILS_ENABLE_ASSERT)
+    target_compile_definitions(qtils INTERFACE QTILS_ENABLE_ASSERT)
+endif()
+
+include(GNUInstallDirs)
+
 target_include_directories(qtils INTERFACE
-    $<BUILD_INTERFACE:src/qtils>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src/>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -50,3 +62,23 @@ install(EXPORT qtils-config
     DESTINATION share/qtils
     NAMESPACE qtils::
 )
+install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_PREFIX}/share/qtils/copyright)
+
+if (QTILS_BUILD_TESTS)
+    enable_testing()
+
+    # since it's hard to check locally for a header-only library, generate a file that includes all headers
+    # and check that it compiles
+
+    file(GLOB_RECURSE headers RELATIVE "${PROJECT_SOURCE_DIR}/src/" CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/src/qtils/*.hpp") 
+    set(qtils_compiles_content "// THIS FILE IS GENERATED AUTOMATICALLY\n")
+    foreach(file ${headers})
+        string(APPEND qtils_compiles_content "#include <${file}>\n")
+    endforeach()
+    string(APPEND qtils_compiles_content "int main(){}\n")
+
+    file(WRITE "${PROJECT_SOURCE_DIR}/test/qtils_compiles.cpp" "${qtils_compiles_content}")
+    
+    add_executable(qtils_compiles test/qtils_compiles.cpp)
+    target_link_libraries(qtils_compiles qtils)
+endif()

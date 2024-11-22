@@ -7,6 +7,7 @@
 #pragma once
 
 #include <boost/algorithm/hex.hpp>
+
 #include <qtils/bytes.hpp>
 #include <qtils/enum_error_code.hpp>
 #include <qtils/outcome.hpp>

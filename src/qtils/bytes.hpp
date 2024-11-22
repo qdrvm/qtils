@@ -11,6 +11,8 @@
 #include <span>
 #include <vector>
 
+#include <qtils/assert.hpp>
+
 namespace qtils {
   using Bytes = std::vector<uint8_t>;
   template <size_t N>
@@ -18,10 +20,20 @@ namespace qtils {
   using BytesIn = std::span<const uint8_t>;
   using BytesOut = std::span<uint8_t>;
 
+  template <size_t N>
+  using ByteArray = std::array<uint8_t, N>;
+
+  using ByteSpan = std::span<const unsigned char>;
+
+  template <size_t N>
+  using FixedByteSpan = std::span<const unsigned char, N>;
+
+  template <size_t N>
+  using FixedByteSpanMut = std::span<unsigned char, N>;
+
+  using ByteSpanMut = std::span<unsigned char>;
+
   template <typename T>
   concept AsBytes = requires(const T &t) { BytesIn{t}; };
 
-  inline Bytes asVec(BytesIn v) {
-    return {v.begin(), v.end()};
-  }
 }  // namespace qtils

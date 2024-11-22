@@ -42,4 +42,32 @@ namespace qtils {
   inline BytesOut str2byte(std::span<char> s) {
     return {str2byte(s.data()), s.size()};
   }
+
+
+  inline Bytes asVec(BytesIn v) {
+    return {v.begin(), v.end()};
+  }
+
+  template <size_t N>
+  BytesN<N> array_from_span(ByteSpan span) {
+    QTILS_ASSERT_GREATER_EQ(span.size(), N);
+    BytesN<N> array;
+    std::ranges::copy_n(span.begin(), N, array.begin());
+    return array;
+  }
+
+  /**
+   * @brief Create an array from the span content, filling the tail with filler
+   * if array size is greater than span size
+   */
+  template <size_t N>
+  BytesN<N> array_from_span_fill(ByteSpan span, uint8_t filler = 0) {
+    BytesN<N> array;
+    const auto s = std::min(N, span.size());
+    std::ranges::copy_n(span.begin(), s, array.begin());
+    std::ranges::fill(
+        std::ranges::subrange(array.begin() + s, array.end()), filler);
+    return array;
+  }
+  
 }  // namespace qtils
