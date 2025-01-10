@@ -59,7 +59,7 @@ endif()
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(Boost)
 endif ()
-find_package(Boost CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS algorithm outcome)
 
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(fmt)
@@ -68,8 +68,8 @@ find_package(fmt CONFIG REQUIRED)
 
 add_library(qtils INTERFACE)
 target_link_libraries(qtils INTERFACE
-    Boost::outcome
     Boost::algorithm
+    Boost::outcome
     fmt::fmt
 )
 if (QTILS_ENABLE_ASSERT)
