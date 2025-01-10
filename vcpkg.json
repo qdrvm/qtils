@@ -7,7 +7,7 @@
     "boost-algorithm"
   ],
   "features": {
-    "qtils_tests": {
+    "qtils-tests": {
       "description": "Test compilable of qtils",
       "dependencies": [
         "gtest"
