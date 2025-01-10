@@ -10,7 +10,7 @@ option(QTILS_BUILD_TESTS "Build tests" OFF)
 
 if (PACKAGE_MANAGER)
     if(PACKAGE_MANAGER NOT MATCHES "^(hunter|vcpkg)$")
-        message(FATAL_ERROR "PACKAGE_MANAGER must be set to 'hunter', 'vcpkg' or isn't set")
+        message(FATAL_ERROR "PACKAGE_MANAGER must be set to 'hunter', 'vcpkg' or left undefined")
     endif ()
 else ()
     set(PACKAGE_MANAGER "hunter")
