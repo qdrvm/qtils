@@ -34,7 +34,7 @@ endif ()
 
 if(QTILS_BUILD_TESTS)
     if (PACKAGE_MANAGER STREQUAL "vcpkg")
-        list(APPEND VCPKG_MANIFEST_FEATURES qtils_tests)
+        list(APPEND VCPKG_MANIFEST_FEATURES qtils-tests)
     endif()
 endif()
 
