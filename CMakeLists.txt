@@ -68,7 +68,8 @@ find_package(fmt CONFIG REQUIRED)
 
 add_library(qtils INTERFACE)
 target_link_libraries(qtils INTERFACE
-    Boost::boost
+    Boost::outcome
+    Boost::algorithm
     fmt::fmt
 )
 if (QTILS_ENABLE_ASSERT)
