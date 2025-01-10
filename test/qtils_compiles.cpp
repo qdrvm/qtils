@@ -4,6 +4,7 @@
 #include <qtils/bitspan.hpp>
 #include <qtils/byte_utils.hpp>
 #include <qtils/bytes.hpp>
+#include <qtils/bytestr.hpp>
 #include <qtils/cxx20/lexicographical_compare_three_way.hpp>
 #include <qtils/cxx23/forward_like.hpp>
 #include <qtils/cxx23/print.hpp>

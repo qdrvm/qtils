@@ -1,0 +1,17 @@
+{
+  "name": "qtils",
+  "version": "0.0.1",
+  "dependencies": [
+    "fmt",
+    "boost-outcome",
+    "boost-algorithm"
+  ],
+  "features": {
+    "qtils-tests": {
+      "description": "Test compilable of qtils",
+      "dependencies": [
+        "gtest"
+      ]
+    }
+  }
+}

@@ -6,7 +6,19 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
+#ifdef __has_include
+#  if __has_include(<gtest/gtest.h>)
+#    include <gtest/gtest.h>
+#    define GTEST_FOUND
+#  endif
+#endif
+
+#ifndef GTEST_FOUND
+#  error "GTests is not found"
+#else
+#  undef GTEST_FOUND
+#endif
+
 #include <qtils/macro/common.hpp>
 #include <qtils/outcome.hpp>
 
