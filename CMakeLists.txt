@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 
-option(QTILS_BUILD_TESTS "Build tests" ON)
+option(QTILS_BUILD_TESTS "Build tests" OFF)
 
 if (PACKAGE_MANAGER)
     if(PACKAGE_MANAGER NOT MATCHES "^(hunter|vcpkg)$")

@@ -1,2 +1,2 @@
 # qtils
-Utils for KAGOME C++ projects
+Utils for Quadrivium's C++ projects
