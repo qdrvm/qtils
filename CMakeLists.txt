@@ -27,8 +27,8 @@ message(STATUS "Selected package manager: ${PACKAGE_MANAGER}")
 if (PACKAGE_MANAGER STREQUAL "hunter")
     include(cmake/HunterGate.cmake)
     HunterGate(
-        URL  https://github.com/qdrvm/hunter/archive/refs/tags/v0.25.3-qdrvm26.zip
-        SHA1 21e8e29f562962e97fc8bcd35a4ad5244794c7fc
+        URL  https://github.com/qdrvm/hunter/archive/refs/tags/v0.25.3-qdrvm29.tar.gz
+        SHA1 025920fa980ba81a150deaa534a0248dde25fd54
     )
 endif ()
 
@@ -58,8 +58,10 @@ endif()
 
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(Boost)
+    find_package(Boost)
+else ()
+    find_package(Boost REQUIRED COMPONENTS algorithm outcome)
 endif ()
-find_package(Boost REQUIRED COMPONENTS algorithm outcome)
 
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(fmt)
