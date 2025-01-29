@@ -42,7 +42,7 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
-    fmt::throw_format_error("\"x\"/\"X\" or \"0x\"/\"0X\" expected");
+    fmt::report_error(R"("x"/"X" or "0x"/"0X" expected)");
   }
   
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
