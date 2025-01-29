@@ -19,6 +19,7 @@
 #undef GTEST_FOUND
 #endif
 
+#include <qtils/error.hpp>
 #include <qtils/macro/common.hpp>
 #include <qtils/outcome.hpp>
 
@@ -63,7 +64,7 @@
   ({                                                                       \
     auto &&result = (_expression_);                                        \
     if (result.has_error()) {                                              \
-      if (result != outcome::failure(_error_)) {                           \
+      if (_result_.error() != qtils::asError(_error_)) {                   \
         GTEST_FATAL_FAILURE_("Outcome of: " #_expression_)                 \
             << "  Actual:   Error '" << result.error().message() << "'\n"  \
             << "Expected:   Error '" << make_error_code(_error_).message() \
@@ -101,7 +102,7 @@
 #define _EXPECT_OUTCOME_ERROR_3(_result_, _expression_, _error_)               \
   [[maybe_unused]] auto &&_result_ = (_expression_);                           \
   if (_result_.has_error()) {                                                  \
-    if (_result_ != outcome::failure(_error_)) {                               \
+    if (_result_.error() != qtils::asError(_error_)) {                         \
       GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)                    \
           << "  Actual:   Error '" << _result_.error().message() << "'\n"      \
           << "Expected:   Error '" << make_error_code(_error_).message()       \
