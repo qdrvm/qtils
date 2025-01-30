@@ -22,7 +22,7 @@ namespace qtils {
 
       template <typename... Args>
         requires std::is_constructible_v<T, Args...>
-      Wrapper(Args &&...args) : value(std::forward<Args>(args)...) {}
+      explicit Wrapper(Args &&...args) : value(std::forward<Args>(args)...) {}
 
      protected:
       T value;
@@ -111,7 +111,7 @@ namespace qtils {
 
     template <typename... Args>
       requires std::is_constructible_v<Base, Args...>
-    Tagged(Args &&...args) : Base(std::forward<Args>(args)...) {}
+    explicit Tagged(Args &&...args) : Base(std::forward<Args>(args)...) {}
 
     // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
     Tagged &operator=(T &&value) noexcept(
