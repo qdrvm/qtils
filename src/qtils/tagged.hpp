@@ -10,12 +10,72 @@
 #include <string_view>
 #include <type_traits>
 
+// Macro to define a type trait that checks
+// if a binary operator `op` exists for `LHS op RHS`
+#define DEFINE_OPERATOR_CHECK(op_name, op)                                     \
+  template <typename LHS, typename RHS, typename = void>                       \
+  struct is_##op_name : std::false_type {};                                    \
+                                                                               \
+  template <typename LHS, typename RHS>                                        \
+  struct is_##op_name<                                                         \
+      LHS,                                                                     \
+      RHS,                                                                     \
+      std::void_t<decltype(std::declval<LHS>() op std::declval<RHS>())>>       \
+      : std::integral_constant<bool, not IsTagged<std::remove_cvref_t<LHS>>> { \
+  };
+
+// Macro to define a friend operator inside the class
+#define DEFINE_FRIEND_OPERATOR(op_name, op)                             \
+  template <typename LHS>                                               \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
+  friend constexpr auto operator op(LHS &&lhs, const Tagged &rhs)       \
+      -> std::enable_if_t<detail::is_##op_name<LHS, const T &>::value,  \
+                          decltype(lhs op std::declval<const T &>())> { \
+    return lhs op rhs._get_T();                                         \
+  }                                                                     \
+                                                                        \
+  template <typename LHS>                                               \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
+  friend constexpr auto operator op(LHS &&lhs, Tagged &rhs)             \
+      -> std::enable_if_t<detail::is_##op_name<LHS, T &>::value,        \
+                          decltype(lhs op std::declval<T &>())> {       \
+    return lhs op rhs._get_T();                                         \
+  };                                                                    \
+                                                                        \
+  template <typename LHS>                                               \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
+  friend constexpr auto operator op(LHS &&lhs, const Tagged &&rhs)      \
+      -> std::enable_if_t<detail::is_##op_name<LHS, T>::value,          \
+                          decltype(lhs op std::declval<T>())> {         \
+    return lhs op rhs._copy_T();                                        \
+  }                                                                     \
+                                                                        \
+  template <typename LHS>                                               \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
+  friend constexpr auto operator op(LHS &&lhs, Tagged &&rhs)            \
+      -> std::enable_if_t<detail::is_##op_name<LHS, T>::value,          \
+                          decltype(lhs op std::declval<T>())> {         \
+    return lhs op rhs._move_T();                                        \
+  }
+
 namespace qtils {
+
+  template <typename T, typename Tag>
+  class Tagged;
+
+  template <typename T>
+  struct IsTaggedHelper : std::false_type {};
+
+  template <typename T, typename Tag>
+  struct IsTaggedHelper<Tagged<T, Tag>> : std::true_type {};
+
+  template <typename X>
+  concept IsTagged = IsTaggedHelper<std::remove_cvref_t<X>>::value;
 
   namespace detail {
     template <typename T>
     concept NeedsWrapper = not std::is_class_v<T> and not std::is_array_v<T>
-        and not std::is_void_v<T>;
+                       and not std::is_void_v<T>;
 
     template <typename T>
     struct Wrapper {
@@ -71,19 +131,27 @@ namespace qtils {
 
     template <typename From, typename To>
     using copy_qualifiers_t = typename copy_qualifiers<From, To>::type;
+
+    // Define type traits for all required operators
+    DEFINE_OPERATOR_CHECK(shift_left, <<)
+    DEFINE_OPERATOR_CHECK(shift_right, >>)
+    DEFINE_OPERATOR_CHECK(add, +)
+    DEFINE_OPERATOR_CHECK(subtract, -)
+    DEFINE_OPERATOR_CHECK(multiply, *)
+    DEFINE_OPERATOR_CHECK(divide, /)
+    DEFINE_OPERATOR_CHECK(modulus, %)
+    DEFINE_OPERATOR_CHECK(bitwise_and, &)
+    DEFINE_OPERATOR_CHECK(bitwise_or, |)
+    DEFINE_OPERATOR_CHECK(bitwise_xor, ^)
+    DEFINE_OPERATOR_CHECK(logical_and, &&)
+    DEFINE_OPERATOR_CHECK(logical_or, ||)
+    DEFINE_OPERATOR_CHECK(equal, ==)
+    DEFINE_OPERATOR_CHECK(not_equal, !=)
+    DEFINE_OPERATOR_CHECK(less, <)
+    DEFINE_OPERATOR_CHECK(less_equal, <=)
+    DEFINE_OPERATOR_CHECK(greater, >)
+    DEFINE_OPERATOR_CHECK(greater_equal, >=)
   }  // namespace detail
-
-  template <typename T, typename Tag_>
-  class Tagged;
-
-  template <typename X>
-  struct IsTaggedHelper : std::false_type {};
-
-  template <typename X, typename Y>
-  struct IsTaggedHelper<Tagged<X, Y>> : std::true_type {};
-
-  template <typename X>
-  concept IsTagged = IsTaggedHelper<std::remove_cvref_t<X>>::value;
 
   template <typename T, typename Enable = void>
   struct OrigTypeHelper {
@@ -98,10 +166,21 @@ namespace qtils {
   template <typename T>
   using OrigType = typename OrigTypeHelper<T>::Type;
 
+  template <typename LHS, typename T, typename = void>
+  struct is_streamable : std::false_type {};
+
+  template <typename LHS, typename T>
+  struct is_streamable<
+      LHS,
+      T,
+      std::void_t<decltype(std::declval<LHS &>() << std::declval<T>())>>
+      : std::true_type {};
+
+
   template <typename T, typename Tag_>
   class Tagged : public std::conditional_t<detail::NeedsWrapper<T>,
-                     detail::Wrapper<T>,
-                     T> {
+                                           detail::Wrapper<T>,
+                                           T> {
    public:
     static constexpr bool IsWrapped = detail::NeedsWrapper<T>;
     using Base = std::conditional_t<IsWrapped, detail::Wrapper<T>, T>;
@@ -137,13 +216,43 @@ namespace qtils {
     }
 
    private:
+    constexpr const T &_get_T() const noexcept {
+      if constexpr (IsWrapped) {
+        return this->Base::value;
+      } else {
+        return *this;
+      }
+    }
+    constexpr T &_get_T() noexcept {
+      if constexpr (IsWrapped) {
+        return this->Base::value;
+      } else {
+        return *this;
+      }
+    }
+    constexpr T _copy_T() const && noexcept {
+      if constexpr (IsWrapped) {
+        return this->Base::value;
+      } else {
+        return *this;
+      }
+    }
+    constexpr T _move_T() && noexcept {
+      if constexpr (IsWrapped) {
+        return std::move(this->Base::value);
+      } else {
+        return std::move(*this);
+      }
+    }
+
     // Makes tagged result if R based on original type
     template <typename R, typename E = T>
-    using Result = std::conditional_t<not std::is_same_v<E, T>,
+    using Result = std::conditional_t<
+        not std::is_same_v<E, T>,
         E,
         std::conditional_t<std::is_same_v<std::remove_cvref_t<R>, T>,
-            detail::copy_qualifiers_t<R, Tagged>,
-            R>>;
+                           detail::copy_qualifiers_t<R, Tagged>,
+                           R>>;
 
    public:
     // Support all available operators of original type
@@ -177,25 +286,6 @@ namespace qtils {
     return OP static_cast<const T &>(*this);            \
   }
 
-#define OP2(OP)                                                         \
-  template <typename U>                                                 \
-    requires requires {                                                 \
-      std::declval<const T &>() OP std::declval<const OrigType<U> &>(); \
-    }                                                                   \
-  decltype(auto) operator OP(const U &r) const {                        \
-    return static_cast<const T &>(*this)                                \
-        OP static_cast<const OrigType<U> &>(r);                         \
-  }                                                                     \
-                                                                        \
-  template <typename L>                                                 \
-    requires(not IsTagged<L>) and requires {                            \
-      std::forward<L>(std::declval<std::remove_cvref_t<L>>()) OP        \
-      std::declval<const T &>();                                        \
-    }                                                                   \
-  friend decltype(auto) operator OP(L &&l, const Tagged &r) {           \
-    return std::forward<L>(l) OP static_cast<const T &>(r);             \
-  }
-
     OPA(+=)
     OPA(-=)
     OPA(*=)
@@ -207,24 +297,25 @@ namespace qtils {
     OPA(<<=)
     OPA(>>=)
 
-    OP2(==)
-    OP2(!=)
-    OP2(+)
-    OP2(-)
-    OP2(*)
-    OP2(/)
-    OP2(%)
-    OP2(&)
-    OP2(|)
-    OP2(^)
-    OP2(>)
-    OP2(<)
-    OP2(>=)
-    OP2(<=)
-    OP2(&&)
-    OP2(||)
-    OP2(<<)
-    OP2(>>)
+    // Define friend operators inside the class using macros
+    DEFINE_FRIEND_OPERATOR(shift_left, <<)
+    DEFINE_FRIEND_OPERATOR(shift_right, >>)
+    DEFINE_FRIEND_OPERATOR(add, +)
+    DEFINE_FRIEND_OPERATOR(subtract, -)
+    DEFINE_FRIEND_OPERATOR(multiply, *)
+    DEFINE_FRIEND_OPERATOR(divide, /)
+    DEFINE_FRIEND_OPERATOR(modulus, %)
+    DEFINE_FRIEND_OPERATOR(bitwise_and, &)
+    DEFINE_FRIEND_OPERATOR(bitwise_or, |)
+    DEFINE_FRIEND_OPERATOR(bitwise_xor, ^)
+    DEFINE_FRIEND_OPERATOR(logical_and, &&)
+    DEFINE_FRIEND_OPERATOR(logical_or, ||)
+    DEFINE_FRIEND_OPERATOR(equal, ==)
+    DEFINE_FRIEND_OPERATOR(not_equal, !=)
+    DEFINE_FRIEND_OPERATOR(less, <)
+    DEFINE_FRIEND_OPERATOR(less_equal, <=)
+    DEFINE_FRIEND_OPERATOR(greater, >)
+    DEFINE_FRIEND_OPERATOR(greater_equal, >=)
 
     OP1(~)
     OP1(!)
