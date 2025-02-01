@@ -11,8 +11,16 @@
 #include <type_traits>
 
 // Macro to define a type trait that checks
-// if a binary operator `op` exists for `LHS op RHS`
-#define DEFINE_OPERATOR_CHECK(op_name, op)                                     \
+
+#define DEFINE_UNARY_OPERATOR_CHECK(op_name, op)                          \
+  template <typename ARG, typename = void>                                \
+  struct is_##op_name : std::false_type {};                               \
+                                                                          \
+  template <typename ARG>                                                 \
+  struct is_##op_name<ARG, std::void_t<decltype(op std::declval<ARG>())>> \
+      : std::integral_constant<bool, IsTagged<std::remove_cvref_t<ARG>>> {};
+
+#define DEFINE_BINARY_OPERATOR_CHECK(op_name, op)                              \
   template <typename LHS, typename RHS, typename = void>                       \
   struct is_##op_name : std::false_type {};                                    \
                                                                                \
@@ -24,39 +32,175 @@
       : std::integral_constant<bool, not IsTagged<std::remove_cvref_t<LHS>>> { \
   };
 
+#define DEFINE_COMPOUND_OPERATOR_CHECK(op_name, op)                            \
+  template <typename LHS, typename RHS, typename = void>                       \
+  struct is_##op_name : std::false_type {};                                    \
+                                                                               \
+  template <typename LHS, typename RHS>                                        \
+  struct is_##op_name<                                                         \
+      LHS,                                                                     \
+      RHS,                                                                     \
+      std::void_t<decltype(std::declval<LHS &>() op std::declval<RHS>())>>     \
+      : std::integral_constant<bool, not IsTagged<std::remove_cvref_t<LHS>>> { \
+  };
+
 // Macro to define a friend operator inside the class
-#define DEFINE_FRIEND_OPERATOR(op_name, op)                             \
-  template <typename LHS>                                               \
-    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
-  friend constexpr auto operator op(LHS &&lhs, const Tagged &rhs)       \
-      -> std::enable_if_t<detail::is_##op_name<LHS, const T &>::value,  \
-                          decltype(lhs op std::declval<const T &>())> { \
-    return lhs op rhs._get_T();                                         \
-  }                                                                     \
-                                                                        \
-  template <typename LHS>                                               \
-    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
-  friend constexpr auto operator op(LHS &&lhs, Tagged &rhs)             \
-      -> std::enable_if_t<detail::is_##op_name<LHS, T &>::value,        \
-                          decltype(lhs op std::declval<T &>())> {       \
-    return lhs op rhs._get_T();                                         \
-  };                                                                    \
-                                                                        \
-  template <typename LHS>                                               \
-    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
-  friend constexpr auto operator op(LHS &&lhs, const Tagged &&rhs)      \
-      -> std::enable_if_t<detail::is_##op_name<LHS, T>::value,          \
-                          decltype(lhs op std::declval<T>())> {         \
-    return lhs op rhs._copy_T();                                        \
-  }                                                                     \
-                                                                        \
-  template <typename LHS>                                               \
-    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)      \
-  friend constexpr auto operator op(LHS &&lhs, Tagged &&rhs)            \
-      -> std::enable_if_t<detail::is_##op_name<LHS, T>::value,          \
-                          decltype(lhs op std::declval<T>())> {         \
-    return lhs op rhs._move_T();                                        \
+#define DEFINE_UNARY_OPERATOR(op_name, op)                          \
+  decltype(auto) operator op() const &                              \
+    requires requires { std::declval<const T &>().operator op(); }  \
+  {                                                                 \
+    return _get_T().operator op();                                  \
+  }                                                                 \
+  decltype(auto) operator op() &                                    \
+    requires requires { op std::declval<T &>().operator op(); }     \
+  {                                                                 \
+    return _get_T().operator op();                                  \
+  }                                                                 \
+  decltype(auto) operator op() const &&                             \
+    requires requires { std::declval<const T &&>().operator op(); } \
+  {                                                                 \
+    return _copy_T().operator op();                                 \
+  }                                                                 \
+  decltype(auto) operator op() &&                                   \
+    requires requires { std::declval<T &&>().operator op(); }       \
+  {                                                                 \
+    return _move_T().operator op();                                 \
+  }                                                                 \
+                                                                    \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { op std::declval<const T &>(); }              \
+  friend constexpr decltype(auto) operator op(const ARG &a) {       \
+    return op(a._get_T());                                          \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { op std::declval<T &>(); }                    \
+  friend constexpr decltype(auto) operator op(ARG &a) {             \
+    return op(a._get_T());                                          \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { op std::declval<const T &&>(); }             \
+  friend constexpr decltype(auto) operator op(const ARG &&a) {      \
+    return op(a._copy_T());                                         \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { op std::declval<T &&>(); }                   \
+  friend constexpr decltype(auto) operator op(ARG &&a) {            \
+    return op(a._move_T());                                         \
   }
+
+#define DEFINE_SUFFIX_OPERATOR(op_name, op)                          \
+  decltype(auto) operator op(int) const &                            \
+    requires requires { std::declval<const T &>().operator op(0); }  \
+  {                                                                  \
+    return _get_T().operator op(0);                                  \
+  }                                                                  \
+  decltype(auto) operator op(int) &                                  \
+    requires requires { op std::declval<T &>().operator op(0); }     \
+  {                                                                  \
+    return _get_T().operator op(0);                                  \
+  }                                                                  \
+  decltype(auto) operator op(int) const &&                           \
+    requires requires { std::declval<const T &&>().operator op(0); } \
+  {                                                                  \
+    return _copy_T().operator op(0);                                 \
+  }                                                                  \
+  decltype(auto) operator op(int) &&                                 \
+    requires requires { std::declval<T &&>().operator op(0); }       \
+  {                                                                  \
+    return _move_T().operator op(0);                                 \
+  }                                                                  \
+                                                                     \
+  template <typename ARG>                                            \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
+        and requires { std::declval<const T &>() op; }               \
+  friend constexpr decltype(auto) operator op(const ARG &a, int) {   \
+    return (a._get_T())op;                                           \
+  }                                                                  \
+  template <typename ARG>                                            \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
+        and requires { std::declval<T &>() op; }                     \
+  friend constexpr decltype(auto) operator op(ARG &a, int) {         \
+    return (a._get_T())op;                                           \
+  }                                                                  \
+  template <typename ARG>                                            \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
+        and requires { std::declval<const T &&>() op; }              \
+  friend constexpr decltype(auto) operator op(const ARG &&a, int) {  \
+    return (a._copy_T())op;                                          \
+  }                                                                  \
+  template <typename ARG>                                            \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
+        and requires { std::declval<T &&>() op; }                    \
+  friend constexpr decltype(auto) operator op(ARG &&a, int) {        \
+    return (a._move_T())op;                                          \
+  }
+
+// Macro to define a friend operator inside the class
+#define DEFINE_BINARY_OPERATOR(op_name, op)                                    \
+  template <typename LHS>                                                      \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
+        and requires { std::declval<LHS &&>() op std::declval<const T &>(); }  \
+  friend constexpr auto operator op(LHS &&lhs, const Tagged &rhs) {            \
+    return std::forward<LHS>(lhs) op rhs._get_T();                             \
+  }                                                                            \
+                                                                               \
+  template <typename LHS>                                                      \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
+        and requires { std::declval<LHS &&>() op std::declval<T &>(); }        \
+  friend constexpr auto operator op(LHS &&lhs, Tagged &rhs) {                  \
+    return std::forward<LHS>(lhs) op rhs._get_T();                             \
+  };                                                                           \
+                                                                               \
+  template <typename LHS>                                                      \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
+        and requires { std::declval<LHS &&>() op std::declval<const T &&>(); } \
+  friend constexpr auto operator op(LHS &&lhs, const Tagged &&rhs) {           \
+    return std::forward<LHS>(lhs) op rhs._copy_T();                            \
+  }                                                                            \
+                                                                               \
+  template <typename LHS>                                                      \
+    requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
+        and requires { std::declval<LHS &&>() op std::declval<T &&>(); }       \
+  friend constexpr auto operator op(LHS &&lhs, Tagged &&rhs) {                 \
+    return std::forward<LHS>(lhs) op rhs._move_T();                            \
+  }
+
+#define DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(op_name, op)                       \
+  template <typename R>                                                        \
+    requires requires {                                                        \
+      std::declval<T &>() op                                                   \
+      std::declval<detail::copy_qualifiers_t<R, OrigType<R>>>();               \
+    }                                                                          \
+  decltype(auto) operator op(R &&r) {                                          \
+    auto &&lhs_val = [&](auto &&arg) -> decltype(auto) {                       \
+      if constexpr (IsTagged<std::remove_cvref_t<decltype(arg)>>) {            \
+        return static_cast<T>(arg);                                            \
+      } else {                                                                 \
+        return std::forward<decltype(arg)>(arg);                               \
+      }                                                                        \
+    }(*this);                                                                  \
+    auto &&rhs_val = [&](auto &&arg) -> decltype(auto) {                       \
+      if constexpr (IsTagged<std::remove_cvref_t<decltype(arg)>>) {            \
+        return static_cast<OrigType<std::remove_cvref_t<decltype(arg)>>>(arg); \
+      } else {                                                                 \
+        return std::forward<decltype(arg)>(arg);                               \
+      }                                                                        \
+    }(std::forward<R>(r));                                                     \
+    if constexpr (requires { lhs_val op rhs_val; }) {                          \
+      *this = Tagged<T, Tag>(lhs_val op rhs_val);                              \
+    } else {                                                                   \
+      static_assert([] { return false; }(),                                    \
+                    "Compound assignment operator " #op                        \
+                    " is not available for base type");                        \
+    }                                                                          \
+    return *this;                                                              \
+  }                                                                            \
+  DEFINE_BINARY_OPERATOR(op_name, op)
+
 
 namespace qtils {
 
@@ -132,25 +276,44 @@ namespace qtils {
     template <typename From, typename To>
     using copy_qualifiers_t = typename copy_qualifiers<From, To>::type;
 
+    //    DEFINE_UNARY_OPERATOR_CHECK(bitwise_not, ~)
+    //    DEFINE_UNARY_OPERATOR_CHECK(locical_not, !)
+    //    DEFINE_UNARY_OPERATOR_CHECK(pre_increment, ++)
+    //    DEFINE_UNARY_OPERATOR_CHECK(pre_decrement, --)
+    //    //    DEFINE_SUFFIX_OPERATOR_CHECK(post_increment, ++)
+    //    //    DEFINE_SUFFIX_OPERATOR_CHECK(post_decrement, --)
+
     // Define type traits for all required operators
-    DEFINE_OPERATOR_CHECK(shift_left, <<)
-    DEFINE_OPERATOR_CHECK(shift_right, >>)
-    DEFINE_OPERATOR_CHECK(add, +)
-    DEFINE_OPERATOR_CHECK(subtract, -)
-    DEFINE_OPERATOR_CHECK(multiply, *)
-    DEFINE_OPERATOR_CHECK(divide, /)
-    DEFINE_OPERATOR_CHECK(modulus, %)
-    DEFINE_OPERATOR_CHECK(bitwise_and, &)
-    DEFINE_OPERATOR_CHECK(bitwise_or, |)
-    DEFINE_OPERATOR_CHECK(bitwise_xor, ^)
-    DEFINE_OPERATOR_CHECK(logical_and, &&)
-    DEFINE_OPERATOR_CHECK(logical_or, ||)
-    DEFINE_OPERATOR_CHECK(equal, ==)
-    DEFINE_OPERATOR_CHECK(not_equal, !=)
-    DEFINE_OPERATOR_CHECK(less, <)
-    DEFINE_OPERATOR_CHECK(less_equal, <=)
-    DEFINE_OPERATOR_CHECK(greater, >)
-    DEFINE_OPERATOR_CHECK(greater_equal, >=)
+//    DEFINE_BINARY_OPERATOR_CHECK(shift_left, <<)
+//    DEFINE_BINARY_OPERATOR_CHECK(shift_right, >>)
+//    DEFINE_BINARY_OPERATOR_CHECK(add, +)
+//    DEFINE_BINARY_OPERATOR_CHECK(subtract, -)
+//    DEFINE_BINARY_OPERATOR_CHECK(multiply, *)
+//    DEFINE_BINARY_OPERATOR_CHECK(divide, /)
+//    DEFINE_BINARY_OPERATOR_CHECK(modulus, %)
+//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_and, &)
+//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_or, |)
+//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_xor, ^)
+//    DEFINE_BINARY_OPERATOR_CHECK(logical_and, &&)
+//    DEFINE_BINARY_OPERATOR_CHECK(logical_or, ||)
+//    DEFINE_BINARY_OPERATOR_CHECK(equal, ==)
+//    DEFINE_BINARY_OPERATOR_CHECK(not_equal, !=)
+//    DEFINE_BINARY_OPERATOR_CHECK(less, <)
+//    DEFINE_BINARY_OPERATOR_CHECK(less_equal, <=)
+//    DEFINE_BINARY_OPERATOR_CHECK(greater, >)
+//    DEFINE_BINARY_OPERATOR_CHECK(greater_equal, >=)
+//
+//    DEFINE_COMPOUND_OPERATOR_CHECK(plus_assign, +=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(minus_assign, -=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(multiply_assign, *=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(divide_assign, /=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(modulus_assign, %=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_and_assign, &=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_or_assign, |=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_xor_assign, ^=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(shift_left_assign, <<=)
+//    DEFINE_COMPOUND_OPERATOR_CHECK(shift_right_assign, >>=)
+
   }  // namespace detail
 
   template <typename T, typename Enable = void>
@@ -193,19 +356,18 @@ namespace qtils {
       requires std::is_constructible_v<Base, Args...>
     explicit Tagged(Args &&...args) : Base(std::forward<Args>(args)...) {}
 
-    // NOLINTNEXTLINE(cppcoreguidelines-rvalue-reference-param-not-moved)
-    Tagged &operator=(T &&value) noexcept(
-        std::is_nothrow_assignable_v<Base &, T>) {
+    Tagged &operator=(auto &&value) noexcept(
+        std::is_nothrow_assignable_v<Base &, decltype(value)>) {
       if constexpr (IsWrapped) {
         this->value = std::forward<T>(value);
-      } else if constexpr (std::is_assignable_v<Base &, T>) {
-        Base::operator=(std::forward<T>(value));
+      } else if constexpr (std::is_assignable_v<Base &, decltype(value)>) {
+        Base::operator=(std::forward<decltype(value)>(value));
       }
       return *this;
     }
 
     template <typename Out>
-      requires std::is_constructible_v<Out, T>
+      requires std::is_constructible_v<Out, T> or std::is_convertible_v<T, Out>
     explicit operator Out() const {
       // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
@@ -215,8 +377,42 @@ namespace qtils {
       }
     }
 
-   private:
+    friend T &untagged(const Tagged &tagged) noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
+      if constexpr (IsWrapped) {
+        return tagged->Base::value;
+      } else {
+        return tagged;
+      }
+    }
+    friend T &untagged(Tagged &tagged) noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
+      if constexpr (IsWrapped) {
+        return tagged.Base::value;
+      } else {
+        return tagged;
+      }
+    }
+    friend T untagged(const Tagged &&tagged) noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
+      if constexpr (IsWrapped) {
+        return tagged.Base::value;
+      } else {
+        return tagged;
+      }
+    }
+    friend T untagged(Tagged &&tagged) noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
+      if constexpr (IsWrapped) {
+        return std::move(tagged.Base::value);
+      } else {
+        return std::move(tagged);
+      }
+    }
+
+   protected:
     constexpr const T &_get_T() const noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
         return this->Base::value;
       } else {
@@ -224,6 +420,7 @@ namespace qtils {
       }
     }
     constexpr T &_get_T() noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
         return this->Base::value;
       } else {
@@ -231,6 +428,7 @@ namespace qtils {
       }
     }
     constexpr T _copy_T() const && noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
         return this->Base::value;
       } else {
@@ -238,6 +436,7 @@ namespace qtils {
       }
     }
     constexpr T _move_T() && noexcept {
+      // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
         return std::move(this->Base::value);
       } else {
@@ -245,130 +444,48 @@ namespace qtils {
       }
     }
 
-    // Makes tagged result if R based on original type
-    template <typename R, typename E = T>
-    using Result = std::conditional_t<
-        not std::is_same_v<E, T>,
-        E,
-        std::conditional_t<std::is_same_v<std::remove_cvref_t<R>, T>,
-                           detail::copy_qualifiers_t<R, Tagged>,
-                           R>>;
-
    public:
     // Support all available operators of original type
 
-#define OPA(OP)                                                   \
-  template <typename R>                                           \
-    requires requires {                                           \
-      std::declval<T &>() OP std::declval<const OrigType<R> &>(); \
-    }                                                             \
-  decltype(auto) operator OP(const R &r) {                        \
-    if constexpr (IsWrapped) {                                    \
-      this->value OP static_cast<const OrigType<R> &>(r);         \
-    } else if constexpr (std::is_assignable_v<Base &, T>) {       \
-      Base::operator OP(static_cast<const OrigType<R> &>(r));     \
-    }                                                             \
-  }                                                               \
-                                                                  \
-  template <typename L>                                           \
-    requires(not IsTagged<L>) and requires {                      \
-      std::forward<L>(std::declval<std::remove_cvref_t<L>>()) OP  \
-      std::declval<const T &>();                                  \
-    }                                                             \
-  friend decltype(auto) operator OP(L &&l, const Tagged &r) {     \
-    return std::forward<L>(l) OP static_cast<const T &>(r);       \
-  }
-
-#define OP1(OP)                                         \
-  decltype(auto) operator OP() const                    \
-    requires requires { OP std::declval<const T &>(); } \
-  {                                                     \
-    return OP static_cast<const T &>(*this);            \
-  }
-
-    OPA(+=)
-    OPA(-=)
-    OPA(*=)
-    OPA(/=)
-    OPA(%=)
-    OPA(&=)
-    OPA(|=)
-    OPA(^=)
-    OPA(<<=)
-    OPA(>>=)
-
     // Define friend operators inside the class using macros
-    DEFINE_FRIEND_OPERATOR(shift_left, <<)
-    DEFINE_FRIEND_OPERATOR(shift_right, >>)
-    DEFINE_FRIEND_OPERATOR(add, +)
-    DEFINE_FRIEND_OPERATOR(subtract, -)
-    DEFINE_FRIEND_OPERATOR(multiply, *)
-    DEFINE_FRIEND_OPERATOR(divide, /)
-    DEFINE_FRIEND_OPERATOR(modulus, %)
-    DEFINE_FRIEND_OPERATOR(bitwise_and, &)
-    DEFINE_FRIEND_OPERATOR(bitwise_or, |)
-    DEFINE_FRIEND_OPERATOR(bitwise_xor, ^)
-    DEFINE_FRIEND_OPERATOR(logical_and, &&)
-    DEFINE_FRIEND_OPERATOR(logical_or, ||)
-    DEFINE_FRIEND_OPERATOR(equal, ==)
-    DEFINE_FRIEND_OPERATOR(not_equal, !=)
-    DEFINE_FRIEND_OPERATOR(less, <)
-    DEFINE_FRIEND_OPERATOR(less_equal, <=)
-    DEFINE_FRIEND_OPERATOR(greater, >)
-    DEFINE_FRIEND_OPERATOR(greater_equal, >=)
+    DEFINE_BINARY_OPERATOR(shift_left, <<)
+    DEFINE_BINARY_OPERATOR(shift_right, >>)
+    DEFINE_BINARY_OPERATOR(add, +)
+    DEFINE_BINARY_OPERATOR(subtract, -)
+    DEFINE_BINARY_OPERATOR(multiply, *)
+    DEFINE_BINARY_OPERATOR(divide, /)
+    DEFINE_BINARY_OPERATOR(modulus, %)
+    DEFINE_BINARY_OPERATOR(bitwise_and, &)
+    DEFINE_BINARY_OPERATOR(bitwise_or, |)
+    DEFINE_BINARY_OPERATOR(bitwise_xor, ^)
+    DEFINE_BINARY_OPERATOR(logical_and, &&)
+    DEFINE_BINARY_OPERATOR(logical_or, ||)
+    DEFINE_BINARY_OPERATOR(equal, ==)
+    DEFINE_BINARY_OPERATOR(not_equal, !=)
+    DEFINE_BINARY_OPERATOR(less, <)
+    DEFINE_BINARY_OPERATOR(less_equal, <=)
+    DEFINE_BINARY_OPERATOR(greater, >)
+    DEFINE_BINARY_OPERATOR(greater_equal, >=)
 
-    OP1(~)
-    OP1(!)
+    // Определяем compound assignment операторы как член‑функции
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(plus_assign, +=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(minus_assign, -=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(multiply_assign, *=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(divide_assign, /=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(modulus_assign, %=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(bitwise_and_assign, &=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(bitwise_or_assign, |=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(bitwise_xor_assign, ^=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(shift_left_assign, <<=)
+    DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(shift_right_assign, >>=)
 
-#undef OP1
-#undef OP3
-#undef OPA
+    DEFINE_UNARY_OPERATOR(bitwise_not, ~)
+    DEFINE_UNARY_OPERATOR(locical_not, !)
+    DEFINE_UNARY_OPERATOR(pre_increment, ++)
+    DEFINE_UNARY_OPERATOR(pre_decrement, --)
 
-    decltype(auto) operator++()
-      requires requires(T &t) { ++t; }
-    {
-      if constexpr (IsWrapped) {
-        ++this->value;
-      } else {
-        Base::operator++();
-      }
-      return *this;
-    }
-
-    decltype(auto) operator--()
-      requires requires(T &t) { --t; }
-    {
-      if constexpr (IsWrapped) {
-        --this->value;
-      } else {
-        Base::operator--();
-      }
-      return *this;
-    }
-
-    decltype(auto) operator++(int)
-      requires requires(T &t) { t++; }
-    {
-      auto tmp = *this;
-      if constexpr (IsWrapped) {
-        ++this->value;
-      } else {
-        Base::operator++();
-      }
-      return tmp;
-    }
-
-    decltype(auto) operator--(int)
-      requires requires(T &t) { t--; }
-    {
-      auto tmp = *this;
-      if constexpr (IsWrapped) {
-        --this->value;
-      } else {
-        Base::operator--();
-      }
-      return tmp;
-    }
+    DEFINE_SUFFIX_OPERATOR(post_increment, ++)
+    DEFINE_SUFFIX_OPERATOR(post_decrement, --)
   };
 
   /// Number-based marker-type for using as tag
@@ -384,3 +501,11 @@ namespace qtils {
   };
 
 }  // namespace qtils
+
+#undef DEFINE_UNARY_OPERATOR_CHECK
+#undef DEFINE_UNARY_OPERATOR
+#undef DEFINE_SUFFIX_OPERATOR
+#undef DEFINE_BINARY_OPERATOR_CHECK
+#undef DEFINE_BINARY_OPERATOR
+#undef DEFINE_COMPOUND_ASSIGNMENT_OPERATOR
+#undef DEFINE_COMPOUND_OPERATOR_CHECK
