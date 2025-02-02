@@ -4,246 +4,413 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/**
+ * @brief Tagged type implementation with operator overloading.
+ *
+ * This file defines a template class that wraps an underlying type T with an
+ * associated tag. It provides overloaded operators to mimic the behavior of T
+ * while enforcing type-safety.
+ */
+
 #pragma once
 
 #include <algorithm>
 #include <string_view>
 #include <type_traits>
 
-// Macro to define a type trait that checks
-
-#define DEFINE_UNARY_OPERATOR_CHECK(op_name, op)                          \
-  template <typename ARG, typename = void>                                \
-  struct is_##op_name : std::false_type {};                               \
-                                                                          \
-  template <typename ARG>                                                 \
-  struct is_##op_name<ARG, std::void_t<decltype(op std::declval<ARG>())>> \
-      : std::integral_constant<bool, IsTagged<std::remove_cvref_t<ARG>>> {};
-
-#define DEFINE_BINARY_OPERATOR_CHECK(op_name, op)                              \
-  template <typename LHS, typename RHS, typename = void>                       \
-  struct is_##op_name : std::false_type {};                                    \
-                                                                               \
-  template <typename LHS, typename RHS>                                        \
-  struct is_##op_name<                                                         \
-      LHS,                                                                     \
-      RHS,                                                                     \
-      std::void_t<decltype(std::declval<LHS>() op std::declval<RHS>())>>       \
-      : std::integral_constant<bool, not IsTagged<std::remove_cvref_t<LHS>>> { \
-  };
-
-#define DEFINE_COMPOUND_OPERATOR_CHECK(op_name, op)                            \
-  template <typename LHS, typename RHS, typename = void>                       \
-  struct is_##op_name : std::false_type {};                                    \
-                                                                               \
-  template <typename LHS, typename RHS>                                        \
-  struct is_##op_name<                                                         \
-      LHS,                                                                     \
-      RHS,                                                                     \
-      std::void_t<decltype(std::declval<LHS &>() op std::declval<RHS>())>>     \
-      : std::integral_constant<bool, not IsTagged<std::remove_cvref_t<LHS>>> { \
-  };
-
-// Macro to define a friend operator inside the class
+/**
+ * @def DEFINE_UNARY_OPERATOR
+ * @brief Macro to define a unary operator overload for a Tagged type.
+ *
+ * This macro defines member function overloads for the specified unary operator
+ * (both lvalue and rvalue versions) as well as corresponding free function
+ * overloads. The operator is applied to the underlying value extracted via the
+ * `untagged` function.
+ *
+ * @param op_name A symbolic name for the operator (for readability).
+ * @param op The unary operator to be defined.
+ */
 #define DEFINE_UNARY_OPERATOR(op_name, op)                          \
+  /* operators as member-functions */                               \
   decltype(auto) operator op() const &                              \
     requires requires { std::declval<const T &>().operator op(); }  \
   {                                                                 \
-    return _get_T().operator op();                                  \
+    return untagged(*this).operator op();                           \
   }                                                                 \
   decltype(auto) operator op() &                                    \
     requires requires { op std::declval<T &>().operator op(); }     \
   {                                                                 \
-    return _get_T().operator op();                                  \
+    return untagged(*this).operator op();                           \
   }                                                                 \
   decltype(auto) operator op() const &&                             \
     requires requires { std::declval<const T &&>().operator op(); } \
   {                                                                 \
-    return _copy_T().operator op();                                 \
+    return untagged(*this).operator op();                           \
   }                                                                 \
   decltype(auto) operator op() &&                                   \
     requires requires { std::declval<T &&>().operator op(); }       \
   {                                                                 \
-    return _move_T().operator op();                                 \
+    return untagged(*this).operator op();                           \
   }                                                                 \
                                                                     \
+  /* operators as free functions */                                 \
   template <typename ARG>                                           \
     requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
         and requires { op std::declval<const T &>(); }              \
   friend constexpr decltype(auto) operator op(const ARG &a) {       \
-    return op(a._get_T());                                          \
+    return op untagged(a);                                          \
   }                                                                 \
   template <typename ARG>                                           \
     requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
         and requires { op std::declval<T &>(); }                    \
   friend constexpr decltype(auto) operator op(ARG &a) {             \
-    return op(a._get_T());                                          \
+    return op untagged(a);                                          \
   }                                                                 \
   template <typename ARG>                                           \
     requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
         and requires { op std::declval<const T &&>(); }             \
   friend constexpr decltype(auto) operator op(const ARG &&a) {      \
-    return op(a._copy_T());                                         \
+    return op untagged(a);                                          \
   }                                                                 \
   template <typename ARG>                                           \
     requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
         and requires { op std::declval<T &&>(); }                   \
   friend constexpr decltype(auto) operator op(ARG &&a) {            \
-    return op(a._move_T());                                         \
+    return op untagged(a);                                          \
   }
 
-#define DEFINE_SUFFIX_OPERATOR(op_name, op)                          \
-  decltype(auto) operator op(int) const &                            \
-    requires requires { std::declval<const T &>().operator op(0); }  \
-  {                                                                  \
-    return _get_T().operator op(0);                                  \
-  }                                                                  \
-  decltype(auto) operator op(int) &                                  \
-    requires requires { op std::declval<T &>().operator op(0); }     \
-  {                                                                  \
-    return _get_T().operator op(0);                                  \
-  }                                                                  \
-  decltype(auto) operator op(int) const &&                           \
-    requires requires { std::declval<const T &&>().operator op(0); } \
-  {                                                                  \
-    return _copy_T().operator op(0);                                 \
-  }                                                                  \
-  decltype(auto) operator op(int) &&                                 \
-    requires requires { std::declval<T &&>().operator op(0); }       \
-  {                                                                  \
-    return _move_T().operator op(0);                                 \
-  }                                                                  \
-                                                                     \
-  template <typename ARG>                                            \
-    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
-        and requires { std::declval<const T &>() op; }               \
-  friend constexpr decltype(auto) operator op(const ARG &a, int) {   \
-    return (a._get_T())op;                                           \
-  }                                                                  \
-  template <typename ARG>                                            \
-    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
-        and requires { std::declval<T &>() op; }                     \
-  friend constexpr decltype(auto) operator op(ARG &a, int) {         \
-    return (a._get_T())op;                                           \
-  }                                                                  \
-  template <typename ARG>                                            \
-    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
-        and requires { std::declval<const T &&>() op; }              \
-  friend constexpr decltype(auto) operator op(const ARG &&a, int) {  \
-    return (a._copy_T())op;                                          \
-  }                                                                  \
-  template <typename ARG>                                            \
-    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)       \
-        and requires { std::declval<T &&>() op; }                    \
-  friend constexpr decltype(auto) operator op(ARG &&a, int) {        \
-    return (a._move_T())op;                                          \
-  }
-
-// Macro to define a friend operator inside the class
+/**
+ * @def DEFINE_BINARY_OPERATOR
+ * @brief Macro to define a binary operator overload for a Tagged type.
+ *
+ * This macro generates member function overloads for the binary operator
+ * (handling various value categories) and free function overloads that allow
+ * the operator to work with non-Tagged left-hand-side operands. The operator is
+ * applied to the underlying values, which are extracted via the `untagged`
+ * function.
+ *
+ * @param op_name A symbolic name for the operator (for readability).
+ * @param op The binary operator to be defined.
+ */
 #define DEFINE_BINARY_OPERATOR(op_name, op)                                    \
+  /* operators as member-functions */                                          \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) const &                      \
+    requires requires { std::declval<const T &>() op std::forward<RHS>(rhs); } \
+  {                                                                            \
+    return untagged(*this) op std::forward<RHS>(rhs);                          \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) &                            \
+    requires requires { std::declval<T &>() op std::forward<RHS>(rhs); }       \
+  {                                                                            \
+    return untagged(*this) op std::forward<RHS>(rhs);                          \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) const &&                     \
+    requires requires {                                                        \
+      std::declval<const T &&>() op std::forward<RHS>(rhs);                    \
+    }                                                                          \
+  {                                                                            \
+    return untagged(*this) op std::forward<RHS>(rhs);                          \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) &&                           \
+    requires requires { std::declval<T &&>() op std::forward<RHS>(rhs); }      \
+  {                                                                            \
+    return untagged(*this) op std::forward<RHS>(rhs);                          \
+  }                                                                            \
+                                                                               \
+  /* operators as free functions */                                            \
   template <typename LHS>                                                      \
     requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
-        and requires { std::declval<LHS &&>() op std::declval<const T &>(); }  \
-  friend constexpr auto operator op(LHS &&lhs, const Tagged &rhs) {            \
-    return std::forward<LHS>(lhs) op rhs._get_T();                             \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, const Tagged &rhs)    \
+    requires requires { std::forward<LHS>(lhs) op std::declval<const T &>(); } \
+  {                                                                            \
+    return std::forward<LHS>(lhs) op untagged(rhs);                            \
   }                                                                            \
                                                                                \
   template <typename LHS>                                                      \
     requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
-        and requires { std::declval<LHS &&>() op std::declval<T &>(); }        \
-  friend constexpr auto operator op(LHS &&lhs, Tagged &rhs) {                  \
-    return std::forward<LHS>(lhs) op rhs._get_T();                             \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, Tagged &rhs)          \
+    requires requires { std::forward<LHS>(lhs) op std::declval<T &>(); }       \
+  {                                                                            \
+    return std::forward<LHS>(lhs) op untagged(rhs);                            \
   };                                                                           \
                                                                                \
   template <typename LHS>                                                      \
     requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
-        and requires { std::declval<LHS &&>() op std::declval<const T &&>(); } \
-  friend constexpr auto operator op(LHS &&lhs, const Tagged &&rhs) {           \
-    return std::forward<LHS>(lhs) op rhs._copy_T();                            \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, const Tagged &&rhs)   \
+    requires requires {                                                        \
+      std::forward<LHS>(lhs) op std::declval<const T &&>();                    \
+    }                                                                          \
+  {                                                                            \
+    return std::forward<LHS>(lhs) op untagged(rhs);                            \
   }                                                                            \
                                                                                \
   template <typename LHS>                                                      \
     requires(not std::is_same_v<std::remove_cvref_t<LHS>, Tagged>)             \
-        and requires { std::declval<LHS &&>() op std::declval<T &&>(); }       \
-  friend constexpr auto operator op(LHS &&lhs, Tagged &&rhs) {                 \
-    return std::forward<LHS>(lhs) op rhs._move_T();                            \
+  friend constexpr auto operator op(LHS &&lhs, Tagged &&rhs)                   \
+    requires requires { std::forward<LHS>(lhs) op std::declval<T &&>(); }      \
+  {                                                                            \
+    return std::forward<LHS>(lhs) op untagged(rhs);                            \
   }
 
-#define DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(op_name, op)                       \
-  template <typename R>                                                        \
-    requires requires {                                                        \
-      std::declval<T &>() op                                                   \
-      std::declval<detail::copy_qualifiers_t<R, OrigType<R>>>();               \
-    }                                                                          \
-  decltype(auto) operator op(R &&r) {                                          \
-    auto &&lhs_val = [&](auto &&arg) -> decltype(auto) {                       \
-      if constexpr (IsTagged<std::remove_cvref_t<decltype(arg)>>) {            \
-        return static_cast<T>(arg);                                            \
-      } else {                                                                 \
-        return std::forward<decltype(arg)>(arg);                               \
-      }                                                                        \
-    }(*this);                                                                  \
-    auto &&rhs_val = [&](auto &&arg) -> decltype(auto) {                       \
-      if constexpr (IsTagged<std::remove_cvref_t<decltype(arg)>>) {            \
-        return static_cast<OrigType<std::remove_cvref_t<decltype(arg)>>>(arg); \
-      } else {                                                                 \
-        return std::forward<decltype(arg)>(arg);                               \
-      }                                                                        \
-    }(std::forward<R>(r));                                                     \
-    if constexpr (requires { lhs_val op rhs_val; }) {                          \
-      *this = Tagged<T, Tag>(lhs_val op rhs_val);                              \
-    } else {                                                                   \
-      static_assert([] { return false; }(),                                    \
-                    "Compound assignment operator " #op                        \
-                    " is not available for base type");                        \
-    }                                                                          \
-    return *this;                                                              \
-  }                                                                            \
-  DEFINE_BINARY_OPERATOR(op_name, op)
+/**
+ * @def DEFINE_COMPOUND_ASSIGNMENT_OPERATOR
+ * @brief Macro to define a compound assignment operator for a Tagged type.
+ *
+ * This macro defines a compound assignment operator that applies the
+ * corresponding binary operator to the underlying values and assigns the result
+ * back to the Tagged object. It uses helper lambdas to handle both Tagged and
+ * non-Tagged arguments.
+ *
+ * @param op_name A symbolic name for the operator (for readability).
+ * @param op The compound assignment operator to be defined.
+ */
+#define DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(op_name, op)                    \
+  template <typename R>                                                     \
+    requires requires {                                                     \
+      std::declval<T &>() op                                                \
+      std::declval<detail::tagged::copy_qualifiers_t<R, untagged_t<R>>>();  \
+    }                                                                       \
+  decltype(auto) operator op(R &&r) {                                       \
+    auto &&lhs_val = [&](auto &&arg) -> decltype(auto) {                    \
+      if constexpr (is_tagged_v<std::remove_cvref_t<decltype(arg)>>) {      \
+        return static_cast<T>(arg);                                         \
+      } else {                                                              \
+        return std::forward<decltype(arg)>(arg);                            \
+      }                                                                     \
+    }(*this);                                                               \
+    auto &&rhs_val = [&](auto &&arg) -> decltype(auto) {                    \
+      if constexpr (is_tagged_v<std::remove_cvref_t<decltype(arg)>>) {      \
+        return static_cast<untagged_t<std::remove_cvref_t<decltype(arg)>>>( \
+            arg);                                                           \
+      } else {                                                              \
+        return std::forward<decltype(arg)>(arg);                            \
+      }                                                                     \
+    }(std::forward<R>(r));                                                  \
+    if constexpr (requires { lhs_val op rhs_val; }) {                       \
+      *this = Tagged<T, Tag>(lhs_val op rhs_val);                           \
+    } else {                                                                \
+      static_assert([] { return false; }(),                                 \
+                    "Compound assignment operator " #op                     \
+                    " is not available for base type");                     \
+    }                                                                       \
+    return *this;                                                           \
+  }                                                                         \
+  //  DEFINE_BINARY_OPERATOR(op_name, op)
 
+/**
+ * @def DEFINE_SUFFIX_OPERATOR
+ * @brief Macro to define a suffix operator overload for a Tagged type.
+ *
+ * This macro generates overloads for suffix operators (e.g., post-increment or
+ * post-decrement) as member functions and as corresponding free functions. The
+ * operator is applied to the underlying value obtained via `untagged`.
+ *
+ * @param op_name A symbolic name for the operator (for readability).
+ * @param op The suffix operator to be defined.
+ */
+#define DEFINE_SUFFIX_OPERATOR(op_name, op)                         \
+  decltype(auto) operator op(int) const &                           \
+    requires requires { std::declval<const T &>() op; }             \
+  {                                                                 \
+    return untagged(*this) op;                                      \
+  }                                                                 \
+  decltype(auto) operator op(int) &                                 \
+    requires requires { std::declval<T &>() op; }                   \
+  {                                                                 \
+    return untagged(*this) op;                                      \
+  }                                                                 \
+  decltype(auto) operator op(int) const &&                          \
+    requires requires { std::declval<const T &&>() op; }            \
+  {                                                                 \
+    return untagged(*this) op;                                      \
+  }                                                                 \
+  decltype(auto) operator op(int) &&                                \
+    requires requires { std::declval<T &&>() op; }                  \
+  {                                                                 \
+    return untagged(*this) op;                                      \
+  }                                                                 \
+                                                                    \
+  /* operators as free functions */                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { std::declval<const T &>() op; }              \
+  friend constexpr decltype(auto) operator op(const ARG &a, int) {  \
+    return untagged(a) op;                                          \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { std::declval<T &>() op; }                    \
+  friend constexpr decltype(auto) operator op(ARG &a, int) {        \
+    return untagged(a) op;                                          \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { std::declval<const T &&>() op; }             \
+  friend constexpr decltype(auto) operator op(const ARG &&a, int) { \
+    return untagged(a) op;                                          \
+  }                                                                 \
+  template <typename ARG>                                           \
+    requires(std::is_same_v<std::remove_cvref_t<ARG>, Tagged>)      \
+        and requires { std::declval<T &&>() op; }                   \
+  friend constexpr decltype(auto) operator op(ARG &&a, int) {       \
+    return op untagged(a);                                          \
+  }
 
 namespace qtils {
-
+  /**
+   * @brief Forward declaration of the Tagged class template.
+   *
+   * The Tagged class wraps an underlying type T with an associated tag.
+   * It enables type safety and operator overloading while mimicking the
+   * behavior of T.
+   *
+   * @tparam T The underlying type.
+   * @tparam Tag The tag type used for differentiation.
+   */
   template <typename T, typename Tag>
   class Tagged;
 
-  template <typename T>
-  struct IsTaggedHelper : std::false_type {};
+  /**
+   * @brief Helper struct to determine if a type is a Tagged type.
+   *
+   * This helper is specialized for the Tagged class.
+   */
+  template <typename>
+  struct is_tagged : std::false_type {};
 
+  /**
+   * @brief Specialization of is_tagged for Tagged types.
+   *
+   * @tparam T The underlying type.
+   * @tparam Tag The tag type.
+   */
   template <typename T, typename Tag>
-  struct IsTaggedHelper<Tagged<T, Tag>> : std::true_type {};
+  struct is_tagged<Tagged<T, Tag>> : std::true_type {};
 
-  template <typename X>
-  concept IsTagged = IsTaggedHelper<std::remove_cvref_t<X>>::value;
+  /**
+   * @brief Concept to check if a type is a Tagged type.
+   *
+   * @tparam T The type to check.
+   */
+  template <typename T>
+  concept is_tagged_v = is_tagged<std::remove_cvref_t<T>>::value;
 
-  namespace detail {
+  /**
+   * @brief Helper to extract the original type from a Tagged type.
+   *
+   * For non-Tagged types, this is simply the decayed type. For Tagged types,
+   * it extracts the underlying type.
+   *
+   * @tparam T The type to extract from.
+   */
+  template <typename T, typename = void>
+  struct untagged_ : std::false_type {
+    using Type = std::remove_cvref_t<T>;
+  };
+
+  /**
+   * @brief Specialization of untagged_ for Tagged types.
+   *
+   * @tparam T The Tagged type.
+   */
+  template <typename T>
+  struct untagged_<T, std::enable_if_t<is_tagged_v<T>>> {
+    using Type = typename std::remove_cvref_t<T>::Type;
+  };
+
+  /**
+   * @brief Alias to get the original underlying type from T.
+   *
+   * @tparam T The type to process.
+   */
+  template <typename T>
+  using untagged_t = typename untagged_<T>::Type;
+
+  /**
+   * @brief Internal implementation details.
+   *
+   * The detail namespace contains helper classes, concepts, and functions that
+   * are not part of the public API.
+   */
+  namespace detail::tagged {
+
+    /**
+     * @brief Concept to check if a type requires wrapping.
+     *
+     * A type needs a wrapper if it is not a class, array, or void.
+     *
+     * @tparam T The type to check.
+     */
     template <typename T>
     concept NeedsWrapper = not std::is_class_v<T> and not std::is_array_v<T>
                        and not std::is_void_v<T>;
 
+    /**
+     * @brief Wrapper class for types that need to be wrapped.
+     *
+     * For types that are not classes (and are not arrays or void), this wrapper
+     * provides a way to store the underlying value.
+     *
+     * @tparam T The type to wrap.
+     */
     template <typename T>
     struct Wrapper {
       Wrapper() = default;
 
+      /**
+       * @brief Constructs the wrapper with the provided arguments.
+       *
+       * @tparam Args Parameter pack for the arguments.
+       * @param args Arguments forwarded to T's constructor.
+       */
       template <typename... Args>
         requires std::is_constructible_v<T, Args...>
       explicit Wrapper(Args &&...args) : value(std::forward<Args>(args)...) {}
 
      protected:
-      T value;
+      T value;  ///< The wrapped value.
     };
 
+    /**
+     * @brief Compile-time string literal wrapper.
+     *
+     * This struct allows a string literal to be used as a template parameter.
+     *
+     * @tparam N The size of the string literal.
+     */
     template <std::size_t N>
     struct StringLiteral {
-      constexpr StringLiteral(const char (&str)[N]) {
+      /**
+       * @brief Constructs a StringLiteral from a C-style string.
+       *
+       * @param str A C-style string literal.
+       */
+      explicit constexpr StringLiteral(const char (&str)[N]) {
         std::copy_n(str, N, value);
       }
+      /**
+       * @brief Returns a std::string_view of the literal (excluding the
+       * terminating null).
+       *
+       * @return std::string_view representing the literal.
+       */
       constexpr std::string_view view() const {
         return std::string_view(value, N - 1);  // remove '\0'
       }
-      char value[N];
+      char value[N];  ///< Internal storage for the string literal.
     };
 
+    /**
+     * @brief Copies the qualifiers (lvalue, rvalue, const, volatile) from one
+     * type to another.
+     *
+     * @tparam From The type from which to copy qualifiers.
+     * @tparam To The base type to which qualifiers are applied.
+     */
     template <typename From, typename To>
     struct copy_qualifiers {
      private:
@@ -270,92 +437,73 @@ namespace qtils {
           T3>;
 
      public:
-      using type = T4;
+      using type = T4;  ///< The type T4 with copied qualifiers.
     };
 
+    /**
+     * @brief Alias template to simplify access to the copied qualifiers type.
+     *
+     * @tparam From The type from which to copy qualifiers.
+     * @tparam To The base type.
+     */
     template <typename From, typename To>
     using copy_qualifiers_t = typename copy_qualifiers<From, To>::type;
 
-    //    DEFINE_UNARY_OPERATOR_CHECK(bitwise_not, ~)
-    //    DEFINE_UNARY_OPERATOR_CHECK(locical_not, !)
-    //    DEFINE_UNARY_OPERATOR_CHECK(pre_increment, ++)
-    //    DEFINE_UNARY_OPERATOR_CHECK(pre_decrement, --)
-    //    //    DEFINE_SUFFIX_OPERATOR_CHECK(post_increment, ++)
-    //    //    DEFINE_SUFFIX_OPERATOR_CHECK(post_decrement, --)
 
-    // Define type traits for all required operators
-//    DEFINE_BINARY_OPERATOR_CHECK(shift_left, <<)
-//    DEFINE_BINARY_OPERATOR_CHECK(shift_right, >>)
-//    DEFINE_BINARY_OPERATOR_CHECK(add, +)
-//    DEFINE_BINARY_OPERATOR_CHECK(subtract, -)
-//    DEFINE_BINARY_OPERATOR_CHECK(multiply, *)
-//    DEFINE_BINARY_OPERATOR_CHECK(divide, /)
-//    DEFINE_BINARY_OPERATOR_CHECK(modulus, %)
-//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_and, &)
-//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_or, |)
-//    DEFINE_BINARY_OPERATOR_CHECK(bitwise_xor, ^)
-//    DEFINE_BINARY_OPERATOR_CHECK(logical_and, &&)
-//    DEFINE_BINARY_OPERATOR_CHECK(logical_or, ||)
-//    DEFINE_BINARY_OPERATOR_CHECK(equal, ==)
-//    DEFINE_BINARY_OPERATOR_CHECK(not_equal, !=)
-//    DEFINE_BINARY_OPERATOR_CHECK(less, <)
-//    DEFINE_BINARY_OPERATOR_CHECK(less_equal, <=)
-//    DEFINE_BINARY_OPERATOR_CHECK(greater, >)
-//    DEFINE_BINARY_OPERATOR_CHECK(greater_equal, >=)
-//
-//    DEFINE_COMPOUND_OPERATOR_CHECK(plus_assign, +=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(minus_assign, -=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(multiply_assign, *=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(divide_assign, /=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(modulus_assign, %=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_and_assign, &=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_or_assign, |=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(bitwise_xor_assign, ^=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(shift_left_assign, <<=)
-//    DEFINE_COMPOUND_OPERATOR_CHECK(shift_right_assign, >>=)
-
-  }  // namespace detail
-
-  template <typename T, typename Enable = void>
-  struct OrigTypeHelper {
-    using Type = std::remove_cvref_t<T>;
-  };
-
-  template <typename T>
-  struct OrigTypeHelper<T, std::enable_if_t<IsTagged<T>>> {
-    using Type = typename std::remove_cvref_t<T>::Type;
-  };
-
-  template <typename T>
-  using OrigType = typename OrigTypeHelper<T>::Type;
-
-  template <typename LHS, typename T, typename = void>
-  struct is_streamable : std::false_type {};
-
-  template <typename LHS, typename T>
-  struct is_streamable<
-      LHS,
-      T,
-      std::void_t<decltype(std::declval<LHS &>() << std::declval<T>())>>
-      : std::true_type {};
+  }  // namespace detail::tagged
 
 
+  /**
+   * @brief A type-safe wrapper that tags an underlying type with an additional
+   * type parameter.
+   *
+   * The Tagged class wraps an underlying type T with a tag type Tag. It
+   * provides overloads for many operators, forwarding the operations to the
+   * underlying value. If T is not a class type (or array/void), it is wrapped
+   * inside a detail::Wrapper.
+   *
+   * @tparam T The underlying type.
+   * @tparam Tag_ The tag type.
+   */
   template <typename T, typename Tag_>
-  class Tagged : public std::conditional_t<detail::NeedsWrapper<T>,
-                                           detail::Wrapper<T>,
+  class Tagged : public std::conditional_t<detail::tagged::NeedsWrapper<T>,
+                                           detail::tagged::Wrapper<T>,
                                            T> {
+    /// Indicates whether the underlying type is wrapped.
+    static constexpr bool IsWrapped = detail::tagged::NeedsWrapper<T>;
+    /// Alias for the base class type.
+    using Base = std::conditional_t<IsWrapped, detail::tagged::Wrapper<T>, T>;
+
    public:
-    static constexpr bool IsWrapped = detail::NeedsWrapper<T>;
-    using Base = std::conditional_t<IsWrapped, detail::Wrapper<T>, T>;
+    /// The underlying type.
     using Type = T;
+    /// The tag type.
     using Tag = Tag_;
 
+    /**
+     * @brief Default constructor.
+     */
     Tagged() = default;
 
+    /**
+     * @brief Constructs a Tagged object forwarding the arguments to the base
+     * type.
+     *
+     * @tparam Args Parameter pack for constructor arguments.
+     * @param args Arguments forwarded to the base class constructor.
+     */
     template <typename... Args>
       requires std::is_constructible_v<Base, Args...>
     explicit Tagged(Args &&...args) : Base(std::forward<Args>(args)...) {}
 
+    /**
+     * @brief Assignment operator from any value.
+     *
+     * Assigns a value to the underlying type.
+     *
+     * @param value The value to assign.
+     * @return Reference to the current object.
+     */
     Tagged &operator=(auto &&value) noexcept(
         std::is_nothrow_assignable_v<Base &, decltype(value)>) {
       if constexpr (IsWrapped) {
@@ -366,6 +514,14 @@ namespace qtils {
       return *this;
     }
 
+    /**
+     * @brief Explicit conversion operator to another type.
+     *
+     * Converts the Tagged object to another type Out, if possible.
+     *
+     * @tparam Out The target type.
+     * @return The converted value.
+     */
     template <typename Out>
       requires std::is_constructible_v<Out, T> or std::is_convertible_v<T, Out>
     explicit operator Out() const {
@@ -377,14 +533,26 @@ namespace qtils {
       }
     }
 
-    friend T &untagged(const Tagged &tagged) noexcept {
+    /**
+     * @brief Returns a const reference to the underlying value.
+     *
+     * @param tagged A const Tagged object.
+     * @return A const reference to the underlying T.
+     */
+    friend const T &untagged(const Tagged &tagged) noexcept {
       // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
-        return tagged->Base::value;
+        return tagged.Base::value;
       } else {
         return tagged;
       }
     }
+    /**
+     * @brief Returns a non-const reference to the underlying value.
+     *
+     * @param tagged A non-const Tagged object.
+     * @return A reference to the underlying T.
+     */
     friend T &untagged(Tagged &tagged) noexcept {
       // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
@@ -393,6 +561,12 @@ namespace qtils {
         return tagged;
       }
     }
+    /**
+     * @brief Returns the underlying value by value from a const rvalue.
+     *
+     * @param tagged A const rvalue Tagged object.
+     * @return The underlying T.
+     */
     friend T untagged(const Tagged &&tagged) noexcept {
       // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
@@ -401,6 +575,12 @@ namespace qtils {
         return tagged;
       }
     }
+    /**
+     * @brief Returns the underlying value by value from an rvalue.
+     *
+     * @param tagged An rvalue Tagged object.
+     * @return The underlying T.
+     */
     friend T untagged(Tagged &&tagged) noexcept {
       // NOLINTNEXTLINE(readability-else-after-return)
       if constexpr (IsWrapped) {
@@ -410,44 +590,9 @@ namespace qtils {
       }
     }
 
-   protected:
-    constexpr const T &_get_T() const noexcept {
-      // NOLINTNEXTLINE(readability-else-after-return)
-      if constexpr (IsWrapped) {
-        return this->Base::value;
-      } else {
-        return *this;
-      }
-    }
-    constexpr T &_get_T() noexcept {
-      // NOLINTNEXTLINE(readability-else-after-return)
-      if constexpr (IsWrapped) {
-        return this->Base::value;
-      } else {
-        return *this;
-      }
-    }
-    constexpr T _copy_T() const && noexcept {
-      // NOLINTNEXTLINE(readability-else-after-return)
-      if constexpr (IsWrapped) {
-        return this->Base::value;
-      } else {
-        return *this;
-      }
-    }
-    constexpr T _move_T() && noexcept {
-      // NOLINTNEXTLINE(readability-else-after-return)
-      if constexpr (IsWrapped) {
-        return std::move(this->Base::value);
-      } else {
-        return std::move(*this);
-      }
-    }
+    // Support all available operators of the underlying type
 
-   public:
-    // Support all available operators of original type
-
-    // Define friend operators inside the class using macros
+    // Binary operators
     DEFINE_BINARY_OPERATOR(shift_left, <<)
     DEFINE_BINARY_OPERATOR(shift_right, >>)
     DEFINE_BINARY_OPERATOR(add, +)
@@ -467,7 +612,7 @@ namespace qtils {
     DEFINE_BINARY_OPERATOR(greater, >)
     DEFINE_BINARY_OPERATOR(greater_equal, >=)
 
-    // Определяем compound assignment операторы как член‑функции
+    // Compound assignment operators
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(plus_assign, +=)
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(minus_assign, -=)
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(multiply_assign, *=)
@@ -479,33 +624,49 @@ namespace qtils {
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(shift_left_assign, <<=)
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(shift_right_assign, >>=)
 
+    // Unary operators
     DEFINE_UNARY_OPERATOR(bitwise_not, ~)
     DEFINE_UNARY_OPERATOR(locical_not, !)
     DEFINE_UNARY_OPERATOR(pre_increment, ++)
     DEFINE_UNARY_OPERATOR(pre_decrement, --)
 
+    // Suffix operators
     DEFINE_SUFFIX_OPERATOR(post_increment, ++)
-    DEFINE_SUFFIX_OPERATOR(post_decrement, --)
+    DEFINE_SUFFIX_OPERATOR(post_increment, --)
   };
 
-  /// Number-based marker-type for using as tag
+  /**
+   * @brief Number-based tag marker.
+   *
+   * This struct can be used as a tag for the Tagged class, parameterized by a
+   * number.
+   *
+   * @tparam Num The numeric tag.
+   */
   template <size_t Num>
   struct NumTag {
+    /// The numeric tag value.
     static constexpr size_t tag = Num;
   };
 
-  /// String-based marker-type for using as tag
-  template <detail::StringLiteral Str>
+  /**
+   * @brief String-based tag marker.
+   *
+   * This struct can be used as a tag for the Tagged class, parameterized by a
+   * compile-time string literal.
+   *
+   * @tparam Str A compile-time string literal wrapped in a
+   * detail::StringLiteral.
+   */
+  template <detail::tagged::StringLiteral Str>
   struct StrTag {
+    /// The string tag value.
     static constexpr std::string_view tag = Str.view();
   };
 
 }  // namespace qtils
 
-#undef DEFINE_UNARY_OPERATOR_CHECK
 #undef DEFINE_UNARY_OPERATOR
-#undef DEFINE_SUFFIX_OPERATOR
-#undef DEFINE_BINARY_OPERATOR_CHECK
 #undef DEFINE_BINARY_OPERATOR
 #undef DEFINE_COMPOUND_ASSIGNMENT_OPERATOR
-#undef DEFINE_COMPOUND_OPERATOR_CHECK
+#undef DEFINE_SUFFIX_OPERATOR
