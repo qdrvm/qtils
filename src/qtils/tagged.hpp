@@ -38,7 +38,7 @@
     return untagged(*this).operator op();                      \
   }                                                            \
   decltype(auto) operator op() &                               \
-    requires requires { op suntagged(*this).operator op(); }   \
+    requires requires { op untagged(*this).operator op(); }   \
   {                                                            \
     return untagged(*this).operator op();                      \
   }                                                            \
