@@ -22,13 +22,6 @@ struct fmt::formatter<qtils::BytesIn> {
   bool full = false;
   bool lower = true;
 
-  template <typename F, typename = void>
-  struct func_exists : std::false_type {};
-
-  template <typename F>
-  struct func_exists<F, std::void_t<decltype(std::declval<F>(""))>>
-      : std::true_type {};
-
   constexpr auto parse(format_parse_context &ctx) {
     auto it = ctx.begin();
     auto end = [&] { return it == ctx.end() or * it == '}'; };
@@ -49,12 +42,7 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
-    if constexpr (func_exists<decltype(fmt::report_error)>::value) {
-      fmt::report_error(R"("x"/"X" or "0x"/"0X" expected)");
-    } else if constexpr (func_exists<
-                             decltype(fmt::throw_format_error)>::value) {
-      fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
-    }
+    fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
   }
 
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
