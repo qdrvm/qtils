@@ -38,7 +38,7 @@
     return untagged(*this).operator op();                      \
   }                                                            \
   decltype(auto) operator op() &                               \
-    requires requires { op untagged(*this).operator op(); }   \
+    requires requires { op untagged(*this).operator op(); }    \
   {                                                            \
     return untagged(*this).operator op();                      \
   }                                                            \
@@ -493,9 +493,17 @@ namespace qtils {
      */
     Tagged() = default;
 
-    Tagged(T untagged)
-      requires std::is_convertible_v<T, Base>
-        : Base(std::move(untagged)) {}
+    /**
+     * @brief Constructs a Tagged object by forwarding the argument to the base
+     * class.
+     *
+     * @tparam Arg Type of the argument that must be convertible to the base
+     * type.
+     * @param arg Argument that is forwarded to the base class constructor.
+     */
+    template <typename Arg>
+      requires std::is_convertible_v<Arg, T>
+    Tagged(Arg &&arg) : Base(std::forward<Arg>(arg)) {}
 
     /**
      * @brief Constructs a Tagged object forwarding the arguments to the base
