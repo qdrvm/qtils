@@ -102,25 +102,29 @@
   constexpr decltype(auto) operator op(RHS &&rhs) const &                 \
     requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
   {                                                                       \
-    return untagged(*this) op std::forward<RHS>(rhs);                     \
+    untagged(*this) op std::forward<RHS>(rhs);                            \
+    return *this;                                                         \
   }                                                                       \
   template <typename RHS>                                                 \
   constexpr decltype(auto) operator op(RHS &&rhs) &                       \
     requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
   {                                                                       \
-    return untagged(*this) op std::forward<RHS>(rhs);                     \
+    untagged(*this) op std::forward<RHS>(rhs);                            \
+    return *this;                                                         \
   }                                                                       \
   template <typename RHS>                                                 \
   constexpr decltype(auto) operator op(RHS &&rhs) const &&                \
     requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
   {                                                                       \
-    return untagged(*this) op std::forward<RHS>(rhs);                     \
+    untagged(*this) op std::forward<RHS>(rhs);                            \
+    return *this;                                                         \
   }                                                                       \
   template <typename RHS>                                                 \
   constexpr decltype(auto) operator op(RHS &&rhs) &&                      \
     requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
   {                                                                       \
-    return untagged(*this) op std::forward<RHS>(rhs);                     \
+    untagged(*this) op std::forward<RHS>(rhs);                            \
+    return *this;                                                         \
   }                                                                       \
                                                                           \
   /* operators as free functions */                                       \
