@@ -95,69 +95,77 @@
  *
  * @param op_name A symbolic name for the operator (for readability).
  * @param op The binary operator to be defined.
+ * @param unary_op_result Way to return result of call unary-operator with
+ * underlying value
+ * @param binary_op_result Way to return result of call binary-operator with
+ * underlying values
  */
-#define DEFINE_BINARY_OPERATOR(op_name, op)                               \
-  /* operators as member-functions */                                     \
-  template <typename RHS>                                                 \
-  constexpr decltype(auto) operator op(RHS &&rhs) const &                 \
-    requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
-  {                                                                       \
-    untagged(*this) op std::forward<RHS>(rhs);                            \
-    return *this;                                                         \
-  }                                                                       \
-  template <typename RHS>                                                 \
-  constexpr decltype(auto) operator op(RHS &&rhs) &                       \
-    requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
-  {                                                                       \
-    untagged(*this) op std::forward<RHS>(rhs);                            \
-    return *this;                                                         \
-  }                                                                       \
-  template <typename RHS>                                                 \
-  constexpr decltype(auto) operator op(RHS &&rhs) const &&                \
-    requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
-  {                                                                       \
-    untagged(*this) op std::forward<RHS>(rhs);                            \
-    return *this;                                                         \
-  }                                                                       \
-  template <typename RHS>                                                 \
-  constexpr decltype(auto) operator op(RHS &&rhs) &&                      \
-    requires requires { untagged(*this) op std::forward<RHS>(rhs); }      \
-  {                                                                       \
-    untagged(*this) op std::forward<RHS>(rhs);                            \
-    return *this;                                                         \
-  }                                                                       \
-                                                                          \
-  /* operators as free functions */                                       \
-  template <typename LHS, typename RHS>                                   \
-    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)          \
-  friend constexpr decltype(auto) operator op(LHS &&lhs, const RHS &rhs)  \
-    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }      \
-  {                                                                       \
-    return std::forward<LHS>(lhs) op untagged(rhs);                       \
-  }                                                                       \
-                                                                          \
-  template <typename LHS, typename RHS>                                   \
-    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)          \
-  friend constexpr decltype(auto) operator op(LHS &&lhs, RHS &rhs)        \
-    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }      \
-  {                                                                       \
-    return std::forward<LHS>(lhs) op untagged(rhs);                       \
-  };                                                                      \
-                                                                          \
-  template <typename LHS, typename RHS>                                   \
-    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)          \
-  friend constexpr decltype(auto) operator op(LHS &&lhs, const RHS &&rhs) \
-    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }      \
-  {                                                                       \
-    return std::forward<LHS>(lhs) op untagged(rhs);                       \
-  }                                                                       \
-                                                                          \
-  template <typename LHS, typename RHS>                                   \
-    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)          \
-  friend constexpr auto operator op(LHS &&lhs, RHS &&rhs)                 \
-    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }      \
-  {                                                                       \
-    return std::forward<LHS>(lhs) op untagged(rhs);                       \
+#define DEFINE_BINARY_OPERATOR(op_name, op, unary_op_result, binary_op_result) \
+  /* operators as member-functions */                                          \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) const &                      \
+    requires requires { untagged(*this) op std::forward<RHS>(rhs); }           \
+  {                                                                            \
+    auto &&result = untagged(*this) op std::forward<RHS>(rhs);                 \
+    return unary_op_result;                                                    \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) &                            \
+    requires requires { untagged(*this) op std::forward<RHS>(rhs); }           \
+  {                                                                            \
+    auto &&result = untagged(*this) op std::forward<RHS>(rhs);                 \
+    return unary_op_result;                                                    \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) const &&                     \
+    requires requires { untagged(*this) op std::forward<RHS>(rhs); }           \
+  {                                                                            \
+    auto &&result = untagged(*this) op std::forward<RHS>(rhs);                 \
+    return unary_op_result;                                                    \
+  }                                                                            \
+  template <typename RHS>                                                      \
+  constexpr decltype(auto) operator op(RHS &&rhs) &&                           \
+    requires requires { untagged(*this) op std::forward<RHS>(rhs); }           \
+  {                                                                            \
+    auto &&result = untagged(*this) op std::forward<RHS>(rhs);                 \
+    return unary_op_result;                                                    \
+  }                                                                            \
+                                                                               \
+  /* operators as free functions */                                            \
+  template <typename LHS, typename RHS>                                        \
+    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)               \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, const RHS &rhs)       \
+    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }           \
+  {                                                                            \
+    auto &&result = std::forward<LHS>(lhs) op untagged(rhs);                   \
+    return binary_op_result;                                                   \
+  }                                                                            \
+                                                                               \
+  template <typename LHS, typename RHS>                                        \
+    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)               \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, RHS &rhs)             \
+    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }           \
+  {                                                                            \
+    auto &&result = std::forward<LHS>(lhs) op untagged(rhs);                   \
+    return binary_op_result;                                                   \
+  };                                                                           \
+                                                                               \
+  template <typename LHS, typename RHS>                                        \
+    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)               \
+  friend constexpr decltype(auto) operator op(LHS &&lhs, const RHS &&rhs)      \
+    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }           \
+  {                                                                            \
+    auto &&result = std::forward<LHS>(lhs) op untagged(rhs);                   \
+    return binary_op_result;                                                   \
+  }                                                                            \
+                                                                               \
+  template <typename LHS, typename RHS>                                        \
+    requires(not is_tagged_v<LHS> and std::same_as<RHS, Tagged>)               \
+  friend constexpr auto operator op(LHS &&lhs, RHS &&rhs)                      \
+    requires requires { (std::forward<LHS>(lhs) op untagged(rhs)); }           \
+  {                                                                            \
+    auto &&result = std::forward<LHS>(lhs) op untagged(rhs);                   \
+    return binary_op_result;                                                   \
   }
 
 /**
@@ -614,24 +622,26 @@ namespace qtils {
     // Support all available operators of the underlying type
 
     // Binary operators
-    DEFINE_BINARY_OPERATOR(shift_left, <<)
-    DEFINE_BINARY_OPERATOR(shift_right, >>)
-    DEFINE_BINARY_OPERATOR(add, +)
-    DEFINE_BINARY_OPERATOR(subtract, -)
-    DEFINE_BINARY_OPERATOR(multiply, *)
-    DEFINE_BINARY_OPERATOR(divide, /)
-    DEFINE_BINARY_OPERATOR(modulus, %)
-    DEFINE_BINARY_OPERATOR(bitwise_and, &)
-    DEFINE_BINARY_OPERATOR(bitwise_or, |)
-    DEFINE_BINARY_OPERATOR(bitwise_xor, ^)
-    DEFINE_BINARY_OPERATOR(logical_and, &&)
-    DEFINE_BINARY_OPERATOR(logical_or, ||)
-    DEFINE_BINARY_OPERATOR(equal, ==)
-    DEFINE_BINARY_OPERATOR(not_equal, !=)
-    DEFINE_BINARY_OPERATOR(less, <)
-    DEFINE_BINARY_OPERATOR(less_equal, <=)
-    DEFINE_BINARY_OPERATOR(greater, >)
-    DEFINE_BINARY_OPERATOR(greater_equal, >=)
+    // clang-format off
+    DEFINE_BINARY_OPERATOR(shift_left    , << , Tagged(result) , result        )
+    DEFINE_BINARY_OPERATOR(shift_right   , >> , Tagged(result) , result        )
+    DEFINE_BINARY_OPERATOR(add           , +  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(subtract      , -  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(multiply      , *  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(divide        , /  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(modulus       , %  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(bitwise_and   , &  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(bitwise_or    , |  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(bitwise_xor   , ^  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(logical_and   , && , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(logical_or    , || , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(equal         , == , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(not_equal     , != , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(less          , <  , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(less_equal    , <= , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(greater       , >  , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(greater_equal , >= , ({ result; })  , ({ result; }) )
+    // clang-format on
 
     // Compound assignment operators
     DEFINE_COMPOUND_ASSIGNMENT_OPERATOR(plus_assign, +=)
