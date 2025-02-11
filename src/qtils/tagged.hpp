@@ -633,14 +633,14 @@ namespace qtils {
     DEFINE_BINARY_OPERATOR(bitwise_and   , &  , Tagged(result) , ({ result; }) )
     DEFINE_BINARY_OPERATOR(bitwise_or    , |  , Tagged(result) , ({ result; }) )
     DEFINE_BINARY_OPERATOR(bitwise_xor   , ^  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(logical_and   , && , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(logical_or    , || , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(equal         , == , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(not_equal     , != , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(less          , <  , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(less_equal    , <= , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(greater       , >  , ({ result; })  , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(greater_equal , >= , ({ result; })  , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(logical_and   , && , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(logical_or    , || , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(equal         , == , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(not_equal     , != , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(less          , <  , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(less_equal    , <= , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(greater       , >  , bool(result)   , bool(result)  )
+    DEFINE_BINARY_OPERATOR(greater_equal , >= , bool(result)   , bool(result)  )
     // clang-format on
 
     // Compound assignment operators
