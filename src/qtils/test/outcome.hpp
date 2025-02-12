@@ -250,6 +250,7 @@
       _EXPECT_OUTCOME_ERROR_1)(__VA_ARGS__)
 
 // ------ Obsolete ------
+// TODO(xDimon): remove it at release
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_ERROR` instead.
