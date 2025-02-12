@@ -24,7 +24,7 @@ struct fmt::formatter<qtils::BytesIn> {
 
   constexpr auto parse(format_parse_context &ctx) {
     auto it = ctx.begin();
-    auto end = [&] { return it == ctx.end() or *it == '}'; };
+    auto end = [&] { return it == ctx.end() or * it == '}'; };
     if (end()) {
       return it;
     }
@@ -42,9 +42,9 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
-    fmt::throw_format_error("\"x\"/\"X\" or \"0x\"/\"0X\" expected");
+    fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
   }
-  
+
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {

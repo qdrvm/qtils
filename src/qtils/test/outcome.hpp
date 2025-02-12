@@ -30,24 +30,28 @@
 
 // assert success
 
-#define _ASSERT_OUTCOME_SUCCESS_TRY(_result_, _expression_)             \
-  auto &&_result_ = (_expression_);                                     \
-  if (_result_.has_error()) {                                           \
-    GTEST_FATAL_FAILURE_("Outcome of: " #_expression_)                  \
-        << "  Actual:   Error '" << _result_.error().message() << "'\n" \
-        << "Expected:   Success";                                       \
-  }
+#define _ASSERT_OUTCOME_SUCCESS_TRY(_result_, _expression_)               \
+  [[maybe_unused]] auto &&_result_ = (_expression_);                      \
+  ({                                                                      \
+    if (_result_.has_error()) {                                           \
+      GTEST_FATAL_FAILURE_("Outcome of: " #_expression_)                  \
+          << "  Actual:   Error '" << _result_.error().message() << "'\n" \
+          << "Expected:   Success";                                       \
+    }                                                                     \
+  })
 
 #define _ASSERT_OUTCOME_SUCCESS_3(_result_, _variable_, _expression_) \
-  _ASSERT_OUTCOME_SUCCESS_TRY(_result_, _expression_);                \
-  auto &&_variable_ = std::move(_result_.value());
+  auto &&_variable_ = ({                                              \
+    _ASSERT_OUTCOME_SUCCESS_TRY(_result_, _expression_);              \
+    std::move(_result_.value());                                      \
+  })
 
 #define _ASSERT_OUTCOME_SUCCESS_2(_variable_, _expression_) \
   _ASSERT_OUTCOME_SUCCESS_3(                                \
       _OUTCOME_RESULT_UNIQUE_NAME, _variable_, _expression_)
 
 #define _ASSERT_OUTCOME_SUCCESS_1(_expression_) \
-  ({_ASSERT_OUTCOME_SUCCESS_TRY(_OUTCOME_RESULT_UNIQUE_NAME, _expression_)})
+  _ASSERT_OUTCOME_SUCCESS_TRY(_OUTCOME_RESULT_UNIQUE_NAME, _expression_)
 
 // assert failure
 
@@ -64,7 +68,7 @@
   ({                                                                       \
     auto &&result = (_expression_);                                        \
     if (result.has_error()) {                                              \
-      if (_result_.error() != qtils::asError(_error_)) {                   \
+      if (result.error() != qtils::asError(_error_)) {                     \
         GTEST_FATAL_FAILURE_("Outcome of: " #_expression_)                 \
             << "  Actual:   Error '" << result.error().message() << "'\n"  \
             << "Expected:   Error '" << make_error_code(_error_).message() \
@@ -80,56 +84,63 @@
 
 // expect success
 
-#define _EXPECT_OUTCOME_SUCCESS_2(_result_, _expression_)               \
-  [[maybe_unused]] auto &&_result_ = (_expression_);                    \
-  if (_result_.has_error()) {                                           \
-    GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)               \
-        << "  Actual:   Error '" << _result_.error().message() << "'\n" \
-        << "Expected:   Success";                                       \
-  } else                                                                \
-    void(0)
+#define _EXPECT_OUTCOME_SUCCESS_2(_result_, _expression_)                 \
+  [[maybe_unused]] auto &&_result_ = (_expression_);                      \
+  ({                                                                      \
+    if (_result_.has_error()) {                                           \
+      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)               \
+          << "  Actual:   Error '" << _result_.error().message() << "'\n" \
+          << "Expected:   Success";                                       \
+    }                                                                     \
+  })
 
-#define _EXPECT_OUTCOME_SUCCESS_1(_expression_)                         \
-  if (auto &&_result_ = (_expression_); _result_.has_error()) {         \
-    GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)               \
-        << "  Actual:   Error '" << _result_.error().message() << "'\n" \
-        << "Expected:   Success";                                       \
-  } else                                                                \
-    void(0)
+#define _EXPECT_OUTCOME_SUCCESS_1(_expression_)                           \
+  ({                                                                      \
+    if (auto &&_result_ = (_expression_); _result_.has_error()) {         \
+      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)               \
+          << "  Actual:   Error '" << _result_.error().message() << "'\n" \
+          << "Expected:   Success";                                       \
+    }                                                                     \
+  })
 
 // expect failure
 
-#define _EXPECT_OUTCOME_ERROR_3(_result_, _expression_, _error_)               \
-  [[maybe_unused]] auto &&_result_ = (_expression_);                           \
-  if (_result_.has_error()) {                                                  \
-    if (_result_.error() != qtils::asError(_error_)) {                         \
-      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)                    \
-          << "  Actual:   Error '" << _result_.error().message() << "'\n"      \
-          << "Expected:   Error '" << make_error_code(_error_).message()       \
-          << "'";                                                              \
-    }                                                                          \
-  } else {                                                                     \
-    GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)                      \
-        << "  Actual:   Success\n"                                             \
-        << "Expected:   Error '" << make_error_code(_error_).message() << "'"; \
-  }
+#define _EXPECT_OUTCOME_ERROR_3(_result_, _expression_, _error_)            \
+  [[maybe_unused]] auto &&_result_ = (_expression_);                        \
+  ({                                                                        \
+    if (_result_.has_error()) {                                             \
+      if (_result_.error() != qtils::asError(_error_)) {                    \
+        GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)               \
+            << "  Actual:   Error '" << _result_.error().message() << "'\n" \
+            << "Expected:   Error '" << make_error_code(_error_).message()  \
+            << "'";                                                         \
+      }                                                                     \
+    } else {                                                                \
+      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)                 \
+          << "  Actual:   Success\n"                                        \
+          << "Expected:   Error '" << make_error_code(_error_).message()    \
+          << "'";                                                           \
+    }                                                                       \
+  })
 
-#define _EXPECT_OUTCOME_ERROR_2(_result_, _expression_)   \
-  [[maybe_unused]] auto &&_result_ = (_expression_);      \
-  if (_result_.has_value()) {                             \
-    GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_) \
-        << "  Actual:   Success\n"                        \
-        << "Expected:   Some error";                      \
-  } else                                                  \
-    void(0)
+#define _EXPECT_OUTCOME_ERROR_2(_result_, _expression_)     \
+  [[maybe_unused]] auto &&_result_ = (_expression_);        \
+  ({                                                        \
+    if (_result_.has_value()) {                             \
+      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_) \
+          << "  Actual:   Success\n"                        \
+          << "Expected:   Some error";                      \
+    }                                                       \
+  })
 
-#define _EXPECT_OUTCOME_ERROR_1(_expression_)                   \
-  if (auto &&_result_ = (_expression_); _result_.has_value()) { \
-    GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)       \
-        << "  Actual:   Success\n"                              \
-        << "Expected:   Some error";                            \
-  } else                                                        \
-    void(0)
+#define _EXPECT_OUTCOME_ERROR_1(_expression_)                     \
+  ({                                                              \
+    if (auto &&_result_ = (_expression_); _result_.has_value()) { \
+      GTEST_NONFATAL_FAILURE_("Outcome of: " #_expression_)       \
+          << "  Actual:   Success\n"                              \
+          << "Expected:   Some error";                            \
+    }                                                             \
+  })
 
 // Dispatchers for one or two or three arguments
 #define _GET_MACRO_OF_2(_1, _2, NAME, ...) NAME
@@ -239,6 +250,7 @@
       _EXPECT_OUTCOME_ERROR_1)(__VA_ARGS__)
 
 // ------ Obsolete ------
+// TODO(xDimon): remove it at release
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_ERROR` instead.
