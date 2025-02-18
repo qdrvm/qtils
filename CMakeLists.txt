@@ -56,6 +56,8 @@ else()
     option(QTILS_ENABLE_ASSERT "Enable assertions" OFF)
 endif()
 
+option(FORMAT_ERROR_WITH_FULLTYPE "Use the full type of the category when formatting errors" OFF)
+
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(Boost)
     find_package(Boost)
