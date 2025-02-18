@@ -56,6 +56,8 @@ else()
     option(QTILS_ENABLE_ASSERT "Enable assertions" OFF)
 endif()
 
+option(FORMAT_ERROR_WITH_FULLTYPE "Use the full type of the category when formatting errors" OFF)
+
 if (PACKAGE_MANAGER STREQUAL "hunter")
     hunter_add_package(Boost)
     find_package(Boost)
@@ -77,6 +79,9 @@ target_link_libraries(qtils INTERFACE
 if (QTILS_ENABLE_ASSERT)
     target_compile_definitions(qtils INTERFACE QTILS_ENABLE_ASSERT)
 endif()
+if (FORMAT_ERROR_WITH_FULLTYPE)
+    target_compile_definitions(qtils INTERFACE FORMAT_ERROR_WITH_FULLTYPE)
+endif ()
 
 include(GNUInstallDirs)
 
