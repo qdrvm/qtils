@@ -586,7 +586,7 @@ namespace qtils {
       if constexpr (IsWrapped) {
         return tagged.Base::value;
       } else {
-        return tagged;
+        return static_cast<T &>(tagged);
       }
     }
 
@@ -601,7 +601,7 @@ namespace qtils {
       if constexpr (IsWrapped) {
         return tagged.Base::value;
       } else {
-        return tagged;
+        return static_cast<const T &>(tagged);;
       }
     }
     /**
@@ -615,7 +615,7 @@ namespace qtils {
       if constexpr (IsWrapped) {
         return std::move(tagged.Base::value);
       } else {
-        return std::move(tagged);
+        return std::move(static_cast<T &>(tagged));
       }
     }
 
@@ -625,14 +625,14 @@ namespace qtils {
     // clang-format off
     DEFINE_BINARY_OPERATOR(shift_left    , << , Tagged(result) , result        )
     DEFINE_BINARY_OPERATOR(shift_right   , >> , Tagged(result) , result        )
-    DEFINE_BINARY_OPERATOR(add           , +  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(subtract      , -  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(multiply      , *  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(divide        , /  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(modulus       , %  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(bitwise_and   , &  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(bitwise_or    , |  , Tagged(result) , ({ result; }) )
-    DEFINE_BINARY_OPERATOR(bitwise_xor   , ^  , Tagged(result) , ({ result; }) )
+    DEFINE_BINARY_OPERATOR(add           , +  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(subtract      , -  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(multiply      , *  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(divide        , /  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(modulus       , %  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(bitwise_and   , &  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(bitwise_or    , |  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
+    DEFINE_BINARY_OPERATOR(bitwise_xor   , ^  , Tagged(result) , static_cast<std::remove_cvref_t<decltype(result)>>(result) )
     DEFINE_BINARY_OPERATOR(logical_and   , && , bool(result)   , bool(result)  )
     DEFINE_BINARY_OPERATOR(logical_or    , || , bool(result)   , bool(result)  )
     DEFINE_BINARY_OPERATOR(equal         , == , bool(result)   , bool(result)  )
