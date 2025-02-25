@@ -11,6 +11,7 @@
 #include <qtils/cxx23/print.hpp>
 #include <qtils/cxx23/ranges/contains.hpp>
 #include <qtils/empty.hpp>
+#include <qtils/enable_create_smart_pointer.hpp>
 #include <qtils/enum_error_code.hpp>
 #include <qtils/error.hpp>
 #include <qtils/final_action.hpp>
