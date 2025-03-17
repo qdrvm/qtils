@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#pragma once
+
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
@@ -42,6 +44,13 @@ namespace qtils {
         throw std::invalid_argument("Shared pointer is null");
       }
     }
+
+  private:
+   struct ForceInject{}; // Auxiliary arg appended to select ctor for DI
+
+  public:
+    StrictSharedPtr(std::shared_ptr<T> sptr, ForceInject):
+         StrictSharedPtr(std::move(sptr)) {}
 
     // Copy constructor and assignment
     StrictSharedPtr(const StrictSharedPtr &) = default;
