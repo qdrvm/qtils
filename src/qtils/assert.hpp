@@ -35,7 +35,7 @@ namespace qtils {
   inline void expect(bool condition,
       std::string_view message,
       std::source_location loc = std::source_location::current()) {
-    if (!condition) {
+    if (!condition) [[unlikely]] {
       print_and_abort(message, loc);
     }
   }
@@ -45,7 +45,7 @@ namespace qtils {
   inline void expect(const std::expected<T, E> &expected,
       std::string_view expression,
       std::source_location loc = std::source_location::current()) {
-    if (!expected) {
+    if (!expected) [[unlikely]] {
       print_and_abort(std::format("'{}' contains an unexpected result '{}'",
                           expression,
                           expected.error()),
@@ -59,7 +59,7 @@ namespace qtils {
       const B &b,
       std::string_view sign,
       std::source_location loc = std::source_location::current()) {
-    if (!Cmp{}(a, b)) {
+    if (!Cmp{}(a, b)) [[unlikely]] {
       print_and_abort(std::format("{} {} {}", a, sign, b), loc);
     }
   }
@@ -68,7 +68,7 @@ namespace qtils {
   void expect_range_eq(A &&a,
       B &&b,
       std::source_location loc = std::source_location::current()) {
-    if (!std::ranges::equal(a, b)) {
+    if (!std::ranges::equal(a, b)) [[unlikely]] {
       print_and_abort(std::format("{} == {}", a, b), loc);
     }
   }
