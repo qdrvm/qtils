@@ -49,6 +49,10 @@ namespace qtils {
       return UnhexError::ODD_LENGTH;
     }
     auto count = s.size() / 2;
+    constexpr size_t max_size = 1024 * 1024;
+    if (count > max_size) {
+      return UnhexError::TOO_LONG;
+    }
     if constexpr (requires { t.resize(size_t{}); }) {
       t.resize(count);
     } else {
