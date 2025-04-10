@@ -40,6 +40,16 @@ namespace qtils {
     abort();
   }
 
+  /**
+   * Caller may check output buffer size before calling `unhex`/`unhex0x`.
+   */
+  inline size_t unhexSize(std::string_view s) {
+    if (s.starts_with("0x")) {
+      s.remove_prefix(2);
+    }
+    return s.size() / 2;
+  }
+
   template <typename T>
   outcome::result<void> unhex(T &t, std::string_view s) {
     if (s.starts_with("0x")) {
@@ -48,11 +58,7 @@ namespace qtils {
     if (s.size() % 2 != 0) {
       return UnhexError::ODD_LENGTH;
     }
-    auto count = s.size() / 2;
-    constexpr size_t max_size = 1024 * 1024;
-    if (count > max_size) {
-      return UnhexError::TOO_LONG;
-    }
+    auto count = unhexSize(s);
     if constexpr (requires { t.resize(size_t{}); }) {
       t.resize(count);
     } else {
