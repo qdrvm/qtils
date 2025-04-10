@@ -105,4 +105,32 @@ namespace qtils {
   inline auto operator""_unhex(const char *c, size_t s) {
     return unhex(std::string_view{c, s}).value();
   }
+
+  // duplicate functions combining `unhexSize` and `unhex`/`unhex0x`.
+  inline outcome::result<void> unhexMax(
+      Bytes &out, std::string_view &s, size_t max) {
+    if (unhexSize(s) > max) {
+      return UnhexError::TOO_LONG;
+    }
+    return unhex(out, s);
+  }
+  inline outcome::result<Bytes> unhexMax(std::string_view s, size_t max) {
+    if (unhexSize(s) > max) {
+      return UnhexError::TOO_LONG;
+    }
+    return unhex(s);
+  }
+  inline outcome::result<void> unhex0xMax(
+      Bytes &out, std::string_view &s, size_t max) {
+    if (unhexSize(s) > max) {
+      return UnhexError::TOO_LONG;
+    }
+    return unhex0x(out, s);
+  }
+  inline outcome::result<Bytes> unhex0xMax(std::string_view s, size_t max) {
+    if (unhexSize(s) > max) {
+      return UnhexError::TOO_LONG;
+    }
+    return unhex0x(s);
+  }
 }  // namespace qtils
