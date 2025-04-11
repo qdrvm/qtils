@@ -12,6 +12,8 @@
 #include <qtils/enum_error_code.hpp>
 #include <qtils/outcome.hpp>
 
+constexpr size_t MAX_UNHEX_SIZE = 64 * 1024 * 1024;
+
 namespace qtils {
   enum class UnhexError {
     UNEXPECTED_0X,
@@ -19,6 +21,7 @@ namespace qtils {
     ODD_LENGTH,
     TOO_SHORT,
     TOO_LONG,
+    FIXED_SIZE_TOO_LONG,
     NON_HEX,
   };
   Q_ENUM_ERROR_CODE(UnhexError) {
@@ -34,23 +37,40 @@ namespace qtils {
         return "TOO_SHORT";
       case E::TOO_LONG:
         return "TOO_LONG";
+      case E::FIXED_SIZE_TOO_LONG:
+        return "FIXED_SIZE_TOO_LONG";
       case E::NON_HEX:
         return "NON_HEX";
     }
     abort();
   }
 
+  inline size_t unhexSize(std::string_view s) {
+    if (s.starts_with("0x")) {
+      s.remove_prefix(2);
+    }
+    return s.size() / 2;
+  }
+
   template <typename T>
-  outcome::result<void> unhex(T &t, std::string_view s) {
+  outcome::result<void> unhex(
+      T &t, std::string_view s, size_t max_size = MAX_UNHEX_SIZE) {
     if (s.starts_with("0x")) {
       return UnhexError::UNEXPECTED_0X;
     }
     if (s.size() % 2 != 0) {
       return UnhexError::ODD_LENGTH;
     }
-    auto count = s.size() / 2;
+    const auto count = unhexSize(s);
     if constexpr (requires { t.resize(size_t{}); }) {
-      t.resize(count);
+      if (count > max_size) {
+        return UnhexError::FIXED_SIZE_TOO_LONG;
+      }
+      try {
+        t.resize(count);
+      } catch (const std::bad_alloc &) {
+        return UnhexError::TOO_LONG;
+      }
     } else {
       if (count < t.size()) {
         return UnhexError::TOO_SHORT;
