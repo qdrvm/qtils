@@ -216,7 +216,7 @@ namespace qtils {
   };
 
   /**
-   * @brief Deprecated alias for StrictSharedPtr.
+   * @brief Deprecated alias for SharedRef.
    *
    * This alias exists for backward compatibility and will be removed in future
    * versions.
@@ -224,7 +224,7 @@ namespace qtils {
    * @tparam T The type of the managed object.
    * @tparam Deleter The type of the deleter used to destroy the object.
    *
-   * @deprecated Use StrictSharedPtr<T, Deleter> directly instead.
+   * @deprecated Use SharedRef<T, Deleter> directly instead.
    */
   template <class T, class Deleter = std::default_delete<T>>
     requires(not std::is_void_v<T>)
