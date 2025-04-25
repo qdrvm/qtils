@@ -118,4 +118,15 @@ if (QTILS_BUILD_TESTS)
     
     add_executable(qtils_compiles test/qtils_compiles.cpp)
     target_link_libraries(qtils_compiles qtils)
+
+    # Unit tests
+
+    find_package(GTest CONFIG REQUIRED)
+    set(GTEST_DEPS GTest::gtest_main)
+
+    include_directories(src)
+
+    add_executable(strict_sptr_test test/strict_sptr_test.cpp)
+    target_link_libraries(strict_sptr_test ${GTEST_DEPS})
+
 endif()
