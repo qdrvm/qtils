@@ -23,13 +23,13 @@ namespace qtils {
    */
   template <class T, class Deleter = std::default_delete<T>>
     requires(not std::is_void_v<T>)
-  class StrictSharedPtr {
+  class SharedRef {
    public:
     /// @brief Default constructor is disabled
-    StrictSharedPtr() = delete;
+    SharedRef() = delete;
 
     /// @brief Nullptr constructor is disabled
-    StrictSharedPtr(std::nullptr_t) = delete;
+    SharedRef(std::nullptr_t) = delete;
 
     /**
      * @brief Constructs from an existing std::shared_ptr<T>
@@ -37,7 +37,7 @@ namespace qtils {
      * @throws std::invalid_argument if sptr is null
      */
     // NOLINTNEXTLINE(google-explicit-constructor)
-    StrictSharedPtr(std::shared_ptr<T> sptr) : ptr_(std::move(sptr)) {
+    SharedRef(std::shared_ptr<T> sptr) : ptr_(std::move(sptr)) {
       if (!ptr_) {
         throw std::invalid_argument("Shared pointer is null");
       }
@@ -49,14 +49,14 @@ namespace qtils {
      * @param deleter Deleter to be used
      * @throws std::invalid_argument if raw is null
      */
-    StrictSharedPtr(T *raw, Deleter deleter)
+    SharedRef(T *raw, Deleter deleter)
         : ptr_(std::shared_ptr<T>(raw, std::move(deleter))) {
       if (!ptr_) {
         throw std::invalid_argument("Shared pointer is null");
       }
     }
 
-  private:
+   private:
     /**
      * @brief Special tag type to select the DI constructor overload.
      *
@@ -65,18 +65,20 @@ namespace qtils {
      */
     struct ForceInject {};
 
-  public:
+   public:
     /**
-     * @brief Constructor for use by Dependency Injection (DI) frameworks (e.g., Boost.DI).
+     * @brief Constructor for use by Dependency Injection (DI) frameworks (e.g.,
+     * Boost.DI).
      *
      * DI frameworks typically prefer constructors with the maximum number
      * of parameters when resolving dependencies. This overload includes
-     * an extra dummy tag (`ForceInject`) and a variadic parameter pack (`...`) to
-     * ensure it has the highest arity and is therefore selected by the injector.
+     * an extra dummy tag (`ForceInject`) and a variadic parameter pack (`...`)
+     * to ensure it has the highest arity and is therefore selected by the
+     * injector.
      *
-     * Unlike the standard constructor, this version **bypasses the null-check**.
-     * It assumes the DI container guarantees that the passed `shared_ptr`
-     * is valid and correctly constructed.
+     * Unlike the standard constructor, this version **bypasses the
+     * null-check**. It assumes the DI container guarantees that the passed
+     * `shared_ptr` is valid and correctly constructed.
      *
      * The constructor is not intended for general use. It can only be called
      * explicitly with the `ForceInject` tag to avoid accidental misuse.
@@ -85,20 +87,20 @@ namespace qtils {
      * @param Dummy The ForceInject tag to select this constructor.
      * @param ... Additional dummy parameters to increase constructor arity.
      */
-    StrictSharedPtr(std::shared_ptr<T> sptr, ForceInject, ...)
-        : StrictSharedPtr(std::move(sptr)) {}
+    SharedRef(std::shared_ptr<T> sptr, ForceInject, ...)
+        : SharedRef(std::move(sptr)) {}
 
     /// @brief Copy constructor
-    StrictSharedPtr(const StrictSharedPtr &) = default;
+    SharedRef(const SharedRef &) = default;
 
     /// @brief Copy assignment
-    StrictSharedPtr &operator=(const StrictSharedPtr &) = default;
+    SharedRef &operator=(const SharedRef &) = default;
 
     /// @brief Move constructor
-    StrictSharedPtr(StrictSharedPtr &&) noexcept = default;
+    SharedRef(SharedRef &&) noexcept = default;
 
     /// @brief Move assignment
-    StrictSharedPtr &operator=(StrictSharedPtr &&) noexcept = default;
+    SharedRef &operator=(SharedRef &&) noexcept = default;
 
     /// @brief Access underlying pointer
     T *operator->() const noexcept {
@@ -136,7 +138,7 @@ namespace qtils {
      * @return true if this precedes other in ownership
      */
     template <typename U>
-    bool owner_before(const StrictSharedPtr<U> &other) const noexcept {
+    bool owner_before(const SharedRef<U> &other) const noexcept {
       return ptr_.owner_before(other.ptr_);
     }
 
@@ -151,13 +153,13 @@ namespace qtils {
       return ptr_.owner_before(other);
     }
 
-    /// @brief Swap with another StrictSharedPtr
-    void swap(StrictSharedPtr &other) noexcept {
+    /// @brief Swap with another SharedRef
+    void swap(SharedRef &other) noexcept {
       ptr_.swap(other.ptr_);
     }
 
     /// @brief ADL-friendly swap overload
-    friend void swap(StrictSharedPtr &a, StrictSharedPtr &b) noexcept {
+    friend void swap(SharedRef &a, SharedRef &b) noexcept {
       a.swap(b);
     }
 
@@ -167,10 +169,10 @@ namespace qtils {
     }
 
     /// @brief Equality comparison
-    bool operator==(const StrictSharedPtr &other) const noexcept = default;
+    bool operator==(const SharedRef &other) const noexcept = default;
 
     /// @brief Inequality comparison
-    bool operator!=(const StrictSharedPtr &other) const noexcept = default;
+    bool operator!=(const SharedRef &other) const noexcept = default;
 
     /// @brief Compare with raw shared_ptr
     bool operator==(const std::shared_ptr<T> &other) const noexcept {
@@ -183,7 +185,7 @@ namespace qtils {
     }
 
     /// @brief Less-than comparison for ordered containers
-    bool operator<(const StrictSharedPtr &other) const noexcept {
+    bool operator<(const SharedRef &other) const noexcept {
       return ptr_.owner_before(other.ptr_);
     }
 
@@ -212,5 +214,21 @@ namespace qtils {
    private:
     std::shared_ptr<T> ptr_;
   };
+
+  /**
+   * @brief Deprecated alias for StrictSharedPtr.
+   *
+   * This alias exists for backward compatibility and will be removed in future
+   * versions.
+   *
+   * @tparam T The type of the managed object.
+   * @tparam Deleter The type of the deleter used to destroy the object.
+   *
+   * @deprecated Use StrictSharedPtr<T, Deleter> directly instead.
+   */
+  template <class T, class Deleter = std::default_delete<T>>
+    requires(not std::is_void_v<T>)
+  using StrictSharedPtr [[deprecated("Use SharedRef instead")]] =
+      SharedRef<T, Deleter>;
 
 }  // namespace qtils

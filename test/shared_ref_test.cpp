@@ -5,30 +5,32 @@
  */
 
 #include <gtest/gtest.h>
-#include <qtils/strict_sptr.hpp>
-#include <vector>
+
+#include <qtils/shared_ref.hpp>
+
 #include <set>
+#include <vector>
 
 using namespace qtils;
 
 /**
  * @given A null shared_ptr
- * @when Constructing StrictSharedPtr
+ * @when Constructing SharedRef
  * @then Throws std::invalid_argument
  */
-TEST(StrictSharedPtrTest, ThrowsOnNull) {
+TEST(SharedRefTest, ThrowsOnNull) {
   std::shared_ptr<int> null_ptr;
-  EXPECT_THROW(StrictSharedPtr<int> ptr(null_ptr), std::invalid_argument);
+  EXPECT_THROW(SharedRef<int> ptr(null_ptr), std::invalid_argument);
 }
 
 /**
  * @given A valid shared_ptr<int>
- * @when Wrapped into StrictSharedPtr
+ * @when Wrapped into SharedRef
  * @then Dereferencing and pointer access work correctly
  */
-TEST(StrictSharedPtrTest, BasicUsage) {
+TEST(SharedRefTest, BasicUsage) {
   auto raw = std::make_shared<int>(42);
-  StrictSharedPtr<int> ptr(raw);
+  SharedRef<int> ptr(raw);
 
   EXPECT_EQ(*ptr, 42);
   EXPECT_EQ(ptr.get(), raw.get());
@@ -37,23 +39,23 @@ TEST(StrictSharedPtrTest, BasicUsage) {
 }
 
 /**
- * @given A valid StrictSharedPtr<int>
+ * @given A valid SharedRef<int>
  * @when Used in boolean context
  * @then Returns true
  */
-TEST(StrictSharedPtrTest, BoolOperator) {
-  StrictSharedPtr<int> ptr(std::make_shared<int>(1));
+TEST(SharedRefTest, BoolOperator) {
+  SharedRef<int> ptr(std::make_shared<int>(1));
   EXPECT_TRUE(ptr);
 }
 
 /**
- * @given A shared_ptr<int> and StrictSharedPtr<int> pointing to the same object
+ * @given A shared_ptr<int> and SharedRef<int> pointing to the same object
  * @when Compared using operator== and !=
  * @then Return correct equality results
  */
-TEST(StrictSharedPtrTest, EqualityWithSharedPtr) {
+TEST(SharedRefTest, EqualityWithSharedPtr) {
   auto raw = std::make_shared<int>(100);
-  StrictSharedPtr<int> ptr1(raw);
+  SharedRef<int> ptr1(raw);
   std::shared_ptr<int> sp2 = raw;
 
   EXPECT_TRUE(ptr1 == sp2);
@@ -61,27 +63,27 @@ TEST(StrictSharedPtrTest, EqualityWithSharedPtr) {
 }
 
 /**
- * @given Two StrictSharedPtr<int> pointing to the same object
+ * @given Two SharedRef<int> pointing to the same object
  * @when Compared using operator== and !=
  * @then Return true and false respectively
  */
-TEST(StrictSharedPtrTest, EqualityWithStrictSharedPtr) {
+TEST(SharedRefTest, EqualityWithSharedRef) {
   auto raw = std::make_shared<int>(100);
-  StrictSharedPtr<int> ptr1(raw);
-  StrictSharedPtr<int> ptr2(raw);
+  SharedRef<int> ptr1(raw);
+  SharedRef<int> ptr2(raw);
 
   EXPECT_TRUE(ptr1 == ptr2);
   EXPECT_FALSE(ptr1 != ptr2);
 }
 
 /**
- * @given Two StrictSharedPtr<int> with different values
+ * @given Two SharedRef<int> with different values
  * @when Swapped
  * @then Their values are exchanged
  */
-TEST(StrictSharedPtrTest, Swap) {
-  auto p1 = StrictSharedPtr<int>(std::make_shared<int>(1));
-  auto p2 = StrictSharedPtr<int>(std::make_shared<int>(2));
+TEST(SharedRefTest, Swap) {
+  auto p1 = SharedRef<int>(std::make_shared<int>(1));
+  auto p2 = SharedRef<int>(std::make_shared<int>(2));
 
   swap(p1, p2);
 
@@ -90,13 +92,13 @@ TEST(StrictSharedPtrTest, Swap) {
 }
 
 /**
- * @given Two distinct StrictSharedPtr<int> instances
+ * @given Two distinct SharedRef<int> instances
  * @when owner_before is called
  * @then One is ordered before the other, but not both
  */
-TEST(StrictSharedPtrTest, OwnerBefore) {
-  auto p1 = StrictSharedPtr<int>(std::make_shared<int>(1));
-  auto p2 = StrictSharedPtr<int>(std::make_shared<int>(2));
+TEST(SharedRefTest, OwnerBefore) {
+  auto p1 = SharedRef<int>(std::make_shared<int>(1));
+  auto p2 = SharedRef<int>(std::make_shared<int>(2));
 
   bool a = p1.owner_before(p2);
   bool b = p2.owner_before(p1);
@@ -105,27 +107,27 @@ TEST(StrictSharedPtrTest, OwnerBefore) {
 }
 
 /**
- * @given A std::set of StrictSharedPtr<int>
+ * @given A std::set of SharedRef<int>
  * @when Inserting two different pointers
  * @then Both are stored without conflict
  */
-TEST(StrictSharedPtrTest, OperatorLessForSet) {
-  std::set<StrictSharedPtr<int>> s;
-  s.insert(StrictSharedPtr<int>(std::make_shared<int>(5)));
-  s.insert(StrictSharedPtr<int>(std::make_shared<int>(10)));
+TEST(SharedRefTest, OperatorLessForSet) {
+  std::set<SharedRef<int>> s;
+  s.insert(SharedRef<int>(std::make_shared<int>(5)));
+  s.insert(SharedRef<int>(std::make_shared<int>(10)));
 
   EXPECT_EQ(s.size(), 2);
 }
 
 /**
- * @given A StrictSharedPtr<std::vector<int>> containing elements
+ * @given A SharedRef<std::vector<int>> containing elements
  * @when Accessing an element via operator[]
  * @then Returns the correct value
  */
-TEST(StrictSharedPtrTest, IndexOperatorVector) {
+TEST(SharedRefTest, IndexOperatorVector) {
   auto vec = std::make_shared<std::vector<int>>();
   vec->push_back(123);
-  StrictSharedPtr<std::vector<int>> ptr(vec);
+  SharedRef<std::vector<int>> ptr(vec);
 
   EXPECT_EQ(ptr[0], 123);
 }
