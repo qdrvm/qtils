@@ -66,17 +66,6 @@ namespace qtils {
       return *ptr_;
     }
 
-    // Disable methods that could break the invariant
-    void reset() = delete;
-    void reset(T *) = delete;
-    void reset(T *, std::default_delete<T>) = delete;
-    void reset(T *, void (*)(T *)) = delete;
-    void reset(T *, void (*)(T *, void *), void *) = delete;
-
-    void swap(std::shared_ptr<T> &) = delete;
-    void operator=(std::shared_ptr<T> &) = delete;
-    void operator=(std::shared_ptr<T> &&) = delete;
-
     /**
      * @brief Implicit conversion operator to std::shared_ptr<T>.
      *
@@ -118,13 +107,8 @@ namespace qtils {
       return static_cast<bool>(ptr_);
     }
 
-    bool operator==(const StrictSharedPtr &other) const noexcept {
-      return ptr_ == other.ptr_;
-    }
-
-    bool operator!=(const StrictSharedPtr &other) const noexcept {
-      return ptr_ != other.ptr_;
-    }
+    bool operator==(const StrictSharedPtr &other) const noexcept = default;
+    bool operator!=(const StrictSharedPtr &other) const noexcept = default;
 
     bool operator==(const std::shared_ptr<T> &other) const noexcept {
       return ptr_ == other;
