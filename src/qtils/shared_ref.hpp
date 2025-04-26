@@ -39,7 +39,8 @@ namespace qtils {
     // NOLINTNEXTLINE(google-explicit-constructor)
     SharedRef(std::shared_ptr<T> sptr) : ptr_(std::move(sptr)) {
       if (!ptr_) {
-        throw std::invalid_argument("Shared pointer is null");
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr");
       }
     }
 
@@ -52,7 +53,8 @@ namespace qtils {
     SharedRef(T *raw, Deleter deleter)
         : ptr_(std::shared_ptr<T>(raw, std::move(deleter))) {
       if (!ptr_) {
-        throw std::invalid_argument("Shared pointer is null");
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr");
       }
     }
 
