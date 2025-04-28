@@ -86,10 +86,9 @@ namespace qtils {
      * explicitly with the `ForceInject` tag to avoid accidental misuse.
      *
      * @param sptr The shared_ptr to wrap.
-     * @param Dummy The ForceInject tag to select this constructor.
-     * @param ... Additional dummy parameters to increase constructor arity.
+     * @param Dummies The ForceInject tags to select this constructor.
      */
-    SharedRef(std::shared_ptr<T> sptr, ForceInject, ...)
+    SharedRef(std::shared_ptr<T> sptr, ForceInject, ForceInject)
         : SharedRef(std::move(sptr)) {}
 
     /// @brief Copy constructor
