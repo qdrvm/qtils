@@ -118,4 +118,15 @@ if (QTILS_BUILD_TESTS)
     
     add_executable(qtils_compiles test/qtils_compiles.cpp)
     target_link_libraries(qtils_compiles qtils)
+
+    # Unit tests
+
+    find_package(GTest CONFIG REQUIRED)
+    set(GTEST_DEPS GTest::gtest_main)
+
+    include_directories(src)
+
+    add_executable(shared_ref_test test/shared_ref_test.cpp)
+    target_link_libraries(shared_ref_test ${GTEST_DEPS})
+
 endif()
