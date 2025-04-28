@@ -21,15 +21,17 @@ namespace qtils {
     ByteArray<N> data;
     size_t size;
 
-    FixedByteVector() : data{}, size{} {}
+    FixedByteVector() = default;
 
     FixedByteVector(ByteSpan span) : size{span.size()} {
       QTILS_ASSERT_LESS_EQ(span.size(), N);
       std::copy_n(span.begin(), N, data.begin());
     }
 
-    ByteSpan span() const {
+    ByteSpan span() const & {
       return ByteSpan{data.data(), size};
     }
+
+    ByteSpan span() const && = delete;
   };
 }

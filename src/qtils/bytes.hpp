@@ -13,8 +13,7 @@
 
 namespace qtils {
   using Bytes = std::vector<uint8_t>;
-  template <size_t N>
-  using BytesN = std::array<uint8_t, N>;
+
   using BytesIn = std::span<const uint8_t>;
   using BytesOut = std::span<uint8_t>;
 

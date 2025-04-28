@@ -1,0 +1,162 @@
+/**
+ * Copyright Quadrivium LLC
+ * All Rights Reserved
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#pragma once
+
+#include <qtils/cxx20/lexicographical_compare_three_way.hpp>
+#include <ranges>
+#include <span>
+
+// #include "common/hexutil.hpp"
+#include <qtils/endianness_macros.hpp>
+#include <qtils/hex.hpp>
+
+inline auto operator""_bytes(const char *s, std::size_t size) {
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+  return std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(s), size);
+}
+
+namespace qtils {
+  template <size_t MaxSize, typename Allocator>
+  class SLBuffer;
+
+  class BufferView : public std::span<const uint8_t> {
+   public:
+    using span::span;
+
+    BufferView(std::initializer_list<uint8_t> &&) = delete;
+
+    BufferView(const span &other) : span(other) {}
+
+    template <typename T>
+      requires std::is_integral_v<std::decay_t<T>> and (sizeof(T) == 1)
+    BufferView(std::span<T> other)
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        : span(reinterpret_cast<const uint8_t *>(other.data()), other.size()) {}
+
+    template <typename T>
+    BufferView &operator=(T &&value) {
+      span::operator=(std::forward<T>(value));
+      return *this;
+    }
+
+    template <size_t count>
+    void dropFirst() {
+      *this = subspan<count>();
+    }
+
+    void dropFirst(size_t count) {
+      *this = subspan(count);
+    }
+
+    template <size_t count>
+    void dropLast() {
+      *this = first(size() - count);
+    }
+
+    void dropLast(size_t count) {
+      *this = first(size() - count);
+    }
+
+    std::string toHex() const {
+      return to_hex(Hex{*this});
+    }
+
+    std::string_view toStringView() const {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+      return {reinterpret_cast<const char *>(data()), size()};
+    }
+
+    auto operator<=>(const BufferView &other) const {
+      return qtils::cxx20::lexicographical_compare_three_way(
+          span::begin(), span::end(), other.begin(), other.end());
+    }
+
+    auto operator==(const BufferView &other) const {
+      return (*this <=> other) == std::strong_ordering::equal;
+    }
+  };
+
+  inline std::ostream &operator<<(std::ostream &os, BufferView view) {
+    static constexpr char hex_chars[] = "0123456789ABCDEF";
+    for (uint8_t byte : view) {
+      os.put(hex_chars[byte >> 4]);
+      os.put(hex_chars[byte & 0x0F]);
+    }
+    return os;
+  }
+
+  template <typename Super, typename Prefix>
+  bool startsWith(const Super &super, const Prefix &prefix) {
+    if (std::size(super) >= std::size(prefix)) {
+      return std::equal(
+          std::begin(prefix), std::end(prefix), std::begin(super));
+    }
+    return false;
+  }
+}  // namespace qtils
+
+template <>
+struct fmt::formatter<qtils::BufferView> {
+  // Presentation format: 's' - short, 'l' - long.
+  char presentation = 's';
+
+  // Parses format specifications of the form ['s' | 'l'].
+  constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
+    // Parse the presentation format and store it in the formatter:
+    auto it = ctx.begin();
+    auto end = ctx.end();
+    if (it != end && (*it == 's' || *it == 'l')) {
+      presentation = *it++;
+    }
+
+    // Check if reached the end of the range:
+    if (it != end && *it != '}') {
+      throw format_error("invalid format");
+    }
+
+    // Return an iterator past the end of the parsed range:
+    return it;
+  }
+
+  // Formats the Blob using the parsed format specification (presentation)
+  // stored in this formatter.
+  template <typename FormatContext>
+  auto format(const qtils::BufferView &view, FormatContext &ctx) const
+      -> decltype(ctx.out()) {
+    // ctx.out() is an output iterator to write to.
+
+    if (view.empty()) {
+      static constexpr string_view message("<empty>");
+      return std::copy(message.begin(), message.end(), ctx.out());
+    }
+
+    if (presentation == 's' && view.size() > 5) {
+      return fmt::format_to(ctx.out(),
+          "0x{:04x}…{:04x}",
+          // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+          htobe16(*reinterpret_cast<const uint16_t *>(view.data())),
+          // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+          htobe16(*reinterpret_cast<const uint16_t *>(
+              view.data() + view.size() - sizeof(uint16_t))));
+    }
+
+    return fmt::format_to(ctx.out(), "0x{}", view.toHex());
+  }
+};
+
+template <>
+struct fmt::formatter<std::span<const unsigned int>> {
+  constexpr auto parse(format_parse_context &ctx) {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const std::span<const unsigned int> &span, FormatContext &ctx) {
+    auto out = ctx.out();
+    return fmt::format_to(out, "[{}]", fmt::join(span, ", "));
+  }
+};

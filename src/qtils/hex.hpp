@@ -8,12 +8,29 @@
 
 #include <fmt/ranges.h>
 
+#include <qtils/blob.hpp>
 #include <qtils/bytes.hpp>
 
 namespace qtils {
   struct Hex {
     qtils::BytesIn v;
   };
+
+  std::string to_hex(const qtils::Hex &data) {
+    static constexpr char hex_chars[] = "0123456789ABCDEF";
+
+    std::string result;
+    result.resize(data.v.size() * 2);
+
+    auto it = result.begin();
+    for (uint8_t byte : data.v) {
+      *it++ = hex_chars[byte >> 4];
+      *it++ = hex_chars[byte & 0x0F];
+    }
+
+    return result;
+  }
+
 }  // namespace qtils
 
 template <>
@@ -42,7 +59,7 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
-    fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
+    fmt::report_error(R"("x"/"X" or "0x"/"0X" expected)");
   }
 
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
@@ -75,8 +92,8 @@ struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
   }
 };
 
-// conflicts with `formatter<is_tuple_like>` from <fmt/ranges.h>
-template <size_t N>
-struct fmt::formatter<qtils::BytesN<N>> {
-  formatter() = delete;
-};
+// // conflicts with `formatter<is_tuple_like>` from <fmt/ranges.h>
+// template <size_t N>
+// struct fmt::formatter<qtils::Blob<N>> {
+//   formatter() = delete;
+// };

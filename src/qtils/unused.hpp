@@ -18,4 +18,4 @@ namespace qtils {
   template <size_t N>
   using Unused = Tagged<Empty, NumTag<N>>;
 
-}  // namespace kagome
+}  // namespace qtils
