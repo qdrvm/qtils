@@ -23,7 +23,7 @@
 #include <qtils/optional_ref.hpp>
 #include <qtils/outcome.hpp>
 #include <qtils/read_file.hpp>
-#include <qtils/strict_sptr.hpp>
+#include <qtils/shared_ref.hpp>
 #include <qtils/tagged.hpp>
 #include <qtils/test/outcome.hpp>
 #include <qtils/unhex.hpp>

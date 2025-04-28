@@ -50,7 +50,7 @@ namespace qtils {
      * @param deleter Deleter to be used
      * @throws std::invalid_argument if raw is null
      */
-    SharedRef(T *raw, Deleter deleter)
+    SharedRef(T *raw, Deleter deleter = {})
         : ptr_(std::shared_ptr<T>(raw, std::move(deleter))) {
       if (!ptr_) {
         throw std::invalid_argument(
@@ -173,17 +173,15 @@ namespace qtils {
     /// @brief Equality comparison
     bool operator==(const SharedRef &other) const noexcept = default;
 
-    /// @brief Inequality comparison
-    bool operator!=(const SharedRef &other) const noexcept = default;
-
-    /// @brief Compare with raw shared_ptr
+    /// @brief Compare SharedRef with std::shared_ptr (lhs = StrictSharedPtr)
     bool operator==(const std::shared_ptr<T> &other) const noexcept {
       return ptr_ == other;
     }
 
-    /// @brief Compare with raw shared_ptr
-    bool operator!=(const std::shared_ptr<T> &other) const noexcept {
-      return ptr_ != other;
+    /// @brief Compare std::shared_ptr with SharedRef (lhs = shared_ptr)
+    friend bool operator==(
+        const std::shared_ptr<T> &lhs, const SharedRef &rhs) {
+      return lhs == rhs.ptr_;
     }
 
     /// @brief Less-than comparison for ordered containers
@@ -224,13 +222,10 @@ namespace qtils {
    * versions.
    *
    * @tparam T The type of the managed object.
-   * @tparam Deleter The type of the deleter used to destroy the object.
    *
    * @deprecated Use SharedRef<T, Deleter> directly instead.
    */
-  template <class T, class Deleter = std::default_delete<T>>
-    requires(not std::is_void_v<T>)
-  using StrictSharedPtr [[deprecated("Use SharedRef instead")]] =
-      SharedRef<T, Deleter>;
+  template <class T>
+  using StrictSharedPtr [[deprecated("Use SharedRef instead")]] = SharedRef<T>;
 
 }  // namespace qtils
