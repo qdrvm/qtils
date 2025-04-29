@@ -111,8 +111,4 @@ namespace qtils {
     OUTCOME_TRY(unhex0x(t, s));
     return t;
   }
-
-  inline auto operator""_unhex(const char *c, size_t s) {
-    return unhex(std::string_view{c, s}).value();
-  }
 }  // namespace qtils

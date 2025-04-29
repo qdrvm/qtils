@@ -8,15 +8,15 @@
 
 #include <fmt/ranges.h>
 
-#include <qtils/blob.hpp>
 #include <qtils/bytes.hpp>
 
 namespace qtils {
+
   struct Hex {
-    qtils::BytesIn v;
+    BytesIn v;
   };
 
-  std::string to_hex(const qtils::Hex &data) {
+  inline std::string to_hex(const Hex &data) {
     static constexpr char hex_chars[] = "0123456789ABCDEF";
 
     std::string result;
@@ -59,7 +59,12 @@ struct fmt::formatter<qtils::BytesIn> {
         }
       }
     }
+
+#if FMT_VERSION >= 100000
     fmt::report_error(R"("x"/"X" or "0x"/"0X" expected)");
+#else
+    fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
+#endif
   }
 
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
@@ -91,9 +96,3 @@ struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
     return formatter<qtils::BytesIn>::format(v.v, ctx);
   }
 };
-
-// // conflicts with `formatter<is_tuple_like>` from <fmt/ranges.h>
-// template <size_t N>
-// struct fmt::formatter<qtils::Blob<N>> {
-//   formatter() = delete;
-// };

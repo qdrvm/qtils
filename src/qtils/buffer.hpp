@@ -14,8 +14,11 @@
 #include <boost/container_hash/hash.hpp>
 #include <boost/operators.hpp>
 
+#include <qtils/buffer_view.hpp>
 #include <qtils/hex.hpp>
+#include <qtils/outcome.hpp>
 #include <qtils/size_limited_containers.hpp>
+#include <qtils/unhex.hpp>
 
 namespace qtils {
   /**
@@ -225,12 +228,7 @@ namespace qtils {
     /// mind that it does not perform unhexing, there is ""_unhex for it
     inline Buffer operator""_buf(const char *c, size_t s) {
       // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-      std::vector<uint8_t> chars(c, c + s);
-      return {std::move(chars)};
-    }
-
-    inline Buffer operator""_hex2buf(const char *hex, unsigned long size) {
-      return Buffer::fromHex(std::string_view{hex, size}).value();
+      return {std::vector<uint8_t>(c, c + s)};
     }
   }  // namespace literals
 }  // namespace qtils

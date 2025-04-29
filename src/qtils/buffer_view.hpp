@@ -7,17 +7,13 @@
 #pragma once
 
 #include <qtils/cxx20/lexicographical_compare_three_way.hpp>
-#include <ranges>
-#include <span>
 
-// #include "common/hexutil.hpp"
+#include <span>
+#include <ostream>
+
 #include <qtils/endianness_macros.hpp>
 #include <qtils/hex.hpp>
-
-inline auto operator""_bytes(const char *s, std::size_t size) {
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-  return std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(s), size);
-}
+#include <qtils/literals.hpp>
 
 namespace qtils {
   template <size_t MaxSize, typename Allocator>

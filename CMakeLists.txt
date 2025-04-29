@@ -126,7 +126,5 @@ if (QTILS_BUILD_TESTS)
 
     include_directories(src)
 
-    add_executable(shared_ref_test test/shared_ref_test.cpp)
-    target_link_libraries(shared_ref_test ${GTEST_DEPS})
-
+    add_subdirectory(test)
 endif()

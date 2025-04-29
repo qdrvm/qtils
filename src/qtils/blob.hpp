@@ -15,6 +15,7 @@
 #include <qtils/outcome.hpp>
 #include <qtils/span_adl.hpp>
 #include <qtils/unhex.hpp>
+#include <qtils/hex.hpp>
 // #include "macro/endianness_utils.hpp"
 
 #define JAM_BLOB_STRICT_TYPEDEF(space_name, class_name, blob_size)             \

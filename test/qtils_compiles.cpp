@@ -22,6 +22,7 @@
 #include <qtils/final_action.hpp>
 #include <qtils/fixed_byte_vector.hpp>
 #include <qtils/hex.hpp>
+#include <qtils/literals.hpp>
 #include <qtils/macro/common.hpp>
 #include <qtils/macro/unwrap.hpp>
 #include <qtils/option_take.hpp>
@@ -35,4 +36,4 @@
 #include <qtils/test/outcome.hpp>
 #include <qtils/unhex.hpp>
 #include <qtils/unused.hpp>
-int main() {}
+int main(){}
