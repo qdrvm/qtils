@@ -13,7 +13,10 @@
 
 namespace qtils {
   using Bytes = std::vector<uint8_t>;
-
+  template <size_t N>
+  class Blob;
+  template <size_t N>
+  using BytesN [[deprecated("Use qtils::Blob instead")]] = Blob<N>;
   using BytesIn = std::span<const uint8_t>;
   using BytesOut = std::span<uint8_t>;
 

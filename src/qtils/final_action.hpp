@@ -45,12 +45,10 @@ namespace qtils {
     }
 
     // Prevent dynamic allocation
-    void *operator new(size_t) = delete;  ///< Standard new operator (deleted)
-    void *operator new(
-        size_t, void *) = delete;  ///< Placement new operator (deleted)
-    void *operator new[](size_t) = delete;  ///< Array new operator (deleted)
-    void *operator new[](
-        size_t, void *) = delete;  ///< Placement array new operator (deleted)
+    void *operator new(size_t) = delete;
+    void *operator new(size_t, void *) = delete;
+    void *operator new[](size_t) = delete;
+    void *operator new[](size_t, void *) = delete;
 
    private:
     F func;  ///< The function to execute on destruction.
@@ -96,8 +94,8 @@ namespace qtils {
     }
 
    private:
-    std::optional<F>
-        func;  ///< The function to execute on destruction (if present).
+    /// The function to execute on destruction (if present).
+    std::optional<F> func;
   };
 
   /**

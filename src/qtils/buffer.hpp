@@ -179,8 +179,9 @@ namespace qtils {
     /// Get buffer content as string_view
     [[nodiscard]] std::string_view asString() const {
       return std::string_view(
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-          reinterpret_cast<const char *>(Base::data()), Base::size());
+          // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+          reinterpret_cast<const char *>(Base::data()),
+          Base::size());
     }
 
     /// Construct buffer from string

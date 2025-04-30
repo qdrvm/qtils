@@ -230,6 +230,7 @@ namespace qtils {
    * @deprecated Use SharedRef<T, Deleter> directly instead.
    */
   template <class T>
-  using StrictSharedPtr [[deprecated("Use SharedRef instead")]] = SharedRef<T>;
+  using StrictSharedPtr [[deprecated("Use qtils::SharedRef instead")]] =
+      SharedRef<T>;
 
 }  // namespace qtils
