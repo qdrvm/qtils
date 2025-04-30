@@ -1,10 +1,9 @@
-#include <cstdint>
 #include <concepts>
-#include <span>
+#include <cstdint>
 #include <ranges>
+#include <span>
 
 namespace qtils {
-
 
   /**
    * A span-like class that indexes the underlying byte span by bits.
@@ -81,8 +80,8 @@ namespace qtils {
     }
 
     struct const_iterator {
-        // pointer instead of reference because an iterator should be assignable
-      const BitSpan* span;
+      // pointer instead of reference because an iterator should be assignable
+      const BitSpan *span;
       size_t current_bit;
 
       using value_type = uint8_t;
@@ -145,8 +144,7 @@ namespace qtils {
   static_assert(std::ranges::range<BitSpan<>>);
   static_assert(std::ranges::range<BitSpan<uint8_t>>);
 
-
-}
+}  // namespace qtils
 
 template <typename T>
 struct std::formatter<qtils::BitSpan<T>, char> {

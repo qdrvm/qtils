@@ -12,10 +12,10 @@
 #include <boost/functional/hash.hpp>
 
 #include <qtils/buffer_view.hpp>
+#include <qtils/hex.hpp>
 #include <qtils/outcome.hpp>
 #include <qtils/span_adl.hpp>
 #include <qtils/unhex.hpp>
-#include <qtils/hex.hpp>
 // #include "macro/endianness_utils.hpp"
 
 #define JAM_BLOB_STRICT_TYPEDEF(space_name, class_name, blob_size)             \
@@ -87,7 +87,6 @@
   };
 
 namespace qtils {
-
   /**
    * Error codes for exceptions that may occur during blob initialization
    */
@@ -112,10 +111,15 @@ namespace qtils {
     using const_narref = const byte_t (&)[size_];
     using const_narptr = const byte_t (*)[size_];
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
     /**
      * Initialize blob value
      */
     constexpr Blob() : Array{} {}
+
+    constexpr Blob(std::initializer_list<byte_t> list) {
+      std::copy(list.begin(), list.end(), this->begin());
+    }
 
     const_narref internal_array_reference() const {
       return *const_narptr(this->data());
@@ -137,14 +141,14 @@ namespace qtils {
     /**
      * Converts current blob to std::string
      */
-    std::string toString() const {
+    [[nodiscard]] std::string toString() const {
       return std::string{this->begin(), this->end()};
     }
 
     /**
      * Converts current blob to hex string.
      */
-    std::string toHex() const {
+    [[nodiscard]] std::string toHex() const {
       return to_hex(Hex{*this});
     }
 
@@ -210,19 +214,6 @@ namespace qtils {
 
   template <size_t N>
   using BytesN [[deprecated("Use Blob<N> instead")]] = Blob<N>;
-
-  // extern specification of the most frequently instantiated blob
-  // specializations, used mostly for Hash instantiation
-  extern template class Blob<8ul>;
-  extern template class Blob<16ul>;
-  extern template class Blob<32ul>;
-  extern template class Blob<64ul>;
-
-  // Hash specializations
-  using Hash64 = Blob<8>;
-  using Hash128 = Blob<16>;
-  using Hash256 = Blob<32>;
-  using Hash512 = Blob<64>;
 
   template <size_t N>
   inline std::ostream &operator<<(std::ostream &os, const Blob<N> &blob) {

@@ -358,22 +358,22 @@ TEST(SLVector, Insert_by_range) {
 
   dst = {1, 2};
   ASSERT_THROW(dst.insert(dst.begin(), v_1_2_3.begin(), v_1_2_3.end()),
-               MaxSizeException);
+      MaxSizeException);
   EXPECT_EQ(dst, v_1_2);
 
   dst = {1, 2, 3};
   EXPECT_EQ(dst, v_1_2_3);
 
-  ASSERT_THROW(dst.insert(dst.begin(), v_3_4.begin(), v_3_4.end()),
-               MaxSizeException);
+  ASSERT_THROW(
+      dst.insert(dst.begin(), v_3_4.begin(), v_3_4.end()), MaxSizeException);
   EXPECT_EQ(dst, v_1_2_3);
 
   ASSERT_THROW(dst.insert(std::next(dst.begin()), v_3_4.begin(), v_3_4.end()),
-               MaxSizeException);
+      MaxSizeException);
   EXPECT_EQ(dst, v_1_2_3);
 
-  ASSERT_THROW(dst.insert(dst.end(), v_3_4.begin(), v_3_4.end()),
-               MaxSizeException);
+  ASSERT_THROW(
+      dst.insert(dst.end(), v_3_4.begin(), v_3_4.end()), MaxSizeException);
   EXPECT_EQ(dst, v_1_2_3);
 }
 

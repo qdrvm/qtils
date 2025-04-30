@@ -19,7 +19,7 @@
 
 #define QTILS_UNWRAP_void_2(res, expr)   \
   auto &&res = (expr);                   \
-  if (!res.has_value()) [[unlikely]] {                 \
+  if (!res.has_value()) [[unlikely]] {   \
     return std::unexpected(res.error()); \
   }
 

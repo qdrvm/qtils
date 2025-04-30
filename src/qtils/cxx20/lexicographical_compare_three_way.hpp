@@ -28,7 +28,7 @@ namespace qtils::cxx20 {
     bool exhaust1 = (f1 == l1);
     bool exhaust2 = (f2 == l2);
     for (; !exhaust1 && !exhaust2;
-         exhaust1 = (++f1 == l1), exhaust2 = (++f2 == l2)) {
+        exhaust1 = (++f1 == l1), exhaust2 = (++f2 == l2)) {
       if (auto c = comp(*f1, *f2); c != 0) {
         return c;
       }

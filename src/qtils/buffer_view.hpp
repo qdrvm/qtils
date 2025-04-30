@@ -8,8 +8,8 @@
 
 #include <qtils/cxx20/lexicographical_compare_three_way.hpp>
 
-#include <span>
 #include <ostream>
+#include <span>
 
 #include <qtils/endianness_macros.hpp>
 #include <qtils/hex.hpp>

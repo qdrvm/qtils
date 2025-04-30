@@ -25,7 +25,6 @@ namespace qtils::literals {
   }
 
   inline std::string operator""_hex(const char *c, size_t s) {
-    return to_hex(
-        Hex{std::span{reinterpret_cast<const uint8_t *>(c), s}});
+    return to_hex(Hex{std::span{reinterpret_cast<const uint8_t *>(c), s}});
   }
 }  // namespace qtils::literals

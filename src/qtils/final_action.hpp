@@ -31,7 +31,8 @@ namespace qtils {
     FinalAction &operator=(const FinalAction &func) = delete;
 
     /**
-     * @brief Constructs a FinalAction with a function to execute on destruction.
+     * @brief Constructs a FinalAction with a function to execute on
+     * destruction.
      * @param func The function to execute.
      */
     FinalAction(F &&func) : func(std::forward<F>(func)) {}
@@ -44,13 +45,15 @@ namespace qtils {
     }
 
     // Prevent dynamic allocation
-    void *operator new(size_t) = delete;            ///< Standard new operator (deleted)
-    void *operator new(size_t, void *) = delete;    ///< Placement new operator (deleted)
-    void *operator new[](size_t) = delete;          ///< Array new operator (deleted)
-    void *operator new[](size_t, void *) = delete;  ///< Placement array new operator (deleted)
+    void *operator new(size_t) = delete;  ///< Standard new operator (deleted)
+    void *operator new(
+        size_t, void *) = delete;  ///< Placement new operator (deleted)
+    void *operator new[](size_t) = delete;  ///< Array new operator (deleted)
+    void *operator new[](
+        size_t, void *) = delete;  ///< Placement array new operator (deleted)
 
    private:
-    F func; ///< The function to execute on destruction.
+    F func;  ///< The function to execute on destruction.
   };
 
   /**
@@ -60,7 +63,8 @@ namespace qtils {
   FinalAction(F &&) -> FinalAction<F>;
 
   /**
-   * @brief A class that executes a given function upon destruction but can be moved.
+   * @brief A class that executes a given function upon destruction but can be
+   * moved.
    *
    * This class is similar to FinalAction but allows move operations.
    *
@@ -76,7 +80,8 @@ namespace qtils {
     MovableFinalAction &operator=(const MovableFinalAction &func) = delete;
 
     /**
-     * @brief Constructs a MovableFinalAction with a function to execute on destruction.
+     * @brief Constructs a MovableFinalAction with a function to execute on
+     * destruction.
      * @param func The function to execute.
      */
     MovableFinalAction(F &&func) : func(std::forward<F>(func)) {}
@@ -91,7 +96,8 @@ namespace qtils {
     }
 
    private:
-    std::optional<F> func; ///< The function to execute on destruction (if present).
+    std::optional<F>
+        func;  ///< The function to execute on destruction (if present).
   };
 
   /**

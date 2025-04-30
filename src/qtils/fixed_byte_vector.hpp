@@ -10,7 +10,7 @@
 #include <qtils/bytes.hpp>
 
 namespace qtils {
- 
+
   /**
    * Fixed-capacity vector meant to be allocated on stack
    * Used to avoid heap allocations for small vectors with known capacity
@@ -34,4 +34,5 @@ namespace qtils {
 
     ByteSpan span() const && = delete;
   };
-}
+
+}  // namespace qtils
