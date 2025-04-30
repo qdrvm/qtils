@@ -16,8 +16,21 @@
 #include <qtils/outcome.hpp>
 #include <qtils/span_adl.hpp>
 #include <qtils/unhex.hpp>
-// #include "macro/endianness_utils.hpp"
 
+/**
+ * @def JAM_BLOB_STRICT_TYPEDEF
+ * @brief Declares a strict typedef of qtils::Blob<N> with additional helpers.
+ *
+ * This macro defines a strongly typed wrapper over a fixed-size binary blob
+ * using a derived class. It includes:
+ * - Constructors and assignment operators
+ * - Static factory methods: fromString, fromHex, fromHexWithPrefix, fromSpan
+ * - Hash and fmt format specializations for the type
+ *
+ * @param space_name Namespace to contain the new type
+ * @param class_name Name of the new blob type
+ * @param blob_size Size of the underlying blob in bytes
+ */
 #define JAM_BLOB_STRICT_TYPEDEF(space_name, class_name, blob_size)             \
   namespace space_name {                                                       \
     struct class_name : public ::qtils::Blob<blob_size> {                      \
@@ -87,20 +100,25 @@
   };
 
 namespace qtils {
+
   /**
-   * Error codes for exceptions that may occur during blob initialization
+   * @enum BlobError
+   * @brief Error codes for Blob creation/initialization
    */
-  enum class BlobError : uint8_t { INCORRECT_LENGTH = 1 };
+  enum class BlobError : uint8_t {
+    INCORRECT_LENGTH = 1  ///< Input size does not match the required blob size
+  };
 
   using byte_t = uint8_t;
 
   /**
-   * Base type which represents blob of fixed size.
+   * @class Blob
+   * @brief Fixed-size binary buffer abstraction with utility methods.
    *
-   * std::string is convenient to use but it is not safe.
-   * We can not specify the fixed length for string.
+   * Provides size-bound operations, safe construction from various sources,
+   * and conversion to/from string and hex representations.
    *
-   * For std::array it is possible, so we prefer it over std::string.
+   * @tparam size_ Fixed size of the blob in bytes
    */
   template <size_t size_>
   class Blob : public std::array<byte_t, size_> {
@@ -112,67 +130,55 @@ namespace qtils {
     using const_narptr = const byte_t (*)[size_];
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
-    /**
-     * Initialize blob value
-     */
+    /// Default constructor initializes to zero
     constexpr Blob() : Array{} {}
 
+    /// Initializes blob from initializer list (truncates if too long)
     constexpr Blob(std::initializer_list<byte_t> list) {
       std::copy(list.begin(), list.end(), this->begin());
     }
 
+    /// Access internal array reference (non-owning)
     const_narref internal_array_reference() const {
       return *const_narptr(this->data());
     }
 
-    /**
-     * @brief constructor enabling initializer list
-     * @param l initializer list
-     */
+    /// Initializes from std::array<byte_t, size_>
     constexpr explicit Blob(const Array &l) : Array{l} {}
 
-    /**
-     * In compile-time returns size of current blob.
-     */
+    /// Get size of the blob (in bytes)
     static constexpr size_t size() {
       return size_;
     }
 
-    /**
-     * Converts current blob to std::string
-     */
+    /// Convert blob content to raw std::string
     [[nodiscard]] std::string toString() const {
       return std::string{this->begin(), this->end()};
     }
 
-    /**
-     * Converts current blob to hex string.
-     */
+    /// Convert blob content to hexadecimal string
     [[nodiscard]] std::string toHex() const {
       return to_hex(Hex{*this});
     }
 
     /**
-     * Create Blob from arbitrary string, putting its bytes into the blob
-     * @param data arbitrary string containing
-     * @return result containing Blob object if string has proper size
+     * Construct blob from string content
+     * @param data string with exactly `size_` bytes
+     * @return Blob if successful or error if size mismatches
      */
     static outcome::result<Blob<size_>> fromString(std::string_view data) {
       if (data.size() != size_) {
         return BlobError::INCORRECT_LENGTH;
       }
-
-      Blob<size_> b;
-      std::ranges::copy(data, b.begin());
-
-      return b;
+      Blob<size_> result;
+      std::ranges::copy(data, result.begin());
+      return result;
     }
 
     /**
-     * Create Blob from hex string
-     * @param hex hex string
-     * @return result containing Blob object if hex string has proper size and
-     * is in hex format
+     * Construct blob from hex-encoded string
+     * @param hex string with 2*size_ characters
+     * @return Blob if hex is valid and of correct length
      */
     static outcome::result<Blob<size_>> fromHex(std::string_view hex) {
       OUTCOME_TRY(res, unhex(hex));
@@ -180,10 +186,9 @@ namespace qtils {
     }
 
     /**
-     * Create Blob from hex string prefixed with 0x
-     * @param hex hex string
-     * @return result containing Blob object if hex string has proper size and
-     * is in hex format
+     * Construct blob from hex string prefixed with 0x
+     * @param hex string prefixed with "0x"
+     * @return Blob if hex is valid and of correct length
      */
     static outcome::result<Blob<size_>> fromHexWithPrefix(
         std::string_view hex) {
@@ -192,29 +197,37 @@ namespace qtils {
     }
 
     /**
-     * Create Blob from BufferView
+     * Construct blob from binary span
+     * @param span binary view (BufferView)
+     * @return Blob if span is of correct length
      */
     static outcome::result<Blob<size_>> fromSpan(const BufferView &span) {
       if (span.size() != size_) {
         return BlobError::INCORRECT_LENGTH;
       }
-
       Blob<size_> blob;
       std::ranges::copy(span, blob.begin());
       return blob;
     }
 
+    /// 3-way comparison operator
     auto operator<=>(const Blob<size_> &other) const {
       return SpanAdl{*this} <=> other;
     }
+
+    /// Equality operator
     bool operator==(const Blob<size_> &other) const {
       return SpanAdl{*this} == other;
     }
   };
 
+  /**
+   * @deprecated Use Blob<N> instead.
+   */
   template <size_t N>
   using BytesN [[deprecated("Use Blob<N> instead")]] = Blob<N>;
 
+  /// Output operator to stream as hex string
   template <size_t N>
   inline std::ostream &operator<<(std::ostream &os, const Blob<N> &blob) {
     return os << blob.toHex();
@@ -222,6 +235,7 @@ namespace qtils {
 
 }  // namespace qtils
 
+/// std::hash specialization for Blob<N>
 template <size_t N>
 struct std::hash<qtils::Blob<N>> {
   auto operator()(const qtils::Blob<N> &blob) const {
@@ -229,6 +243,7 @@ struct std::hash<qtils::Blob<N>> {
   }
 };
 
+/// fmt::formatter specialization for Blob<N>
 template <size_t N>
 struct fmt::formatter<qtils::Blob<N>> {
   // Presentation format: 's' - short, 'l' - long.
@@ -271,6 +286,7 @@ struct fmt::formatter<qtils::Blob<N>> {
   }
 };
 
+/// Declares outcome error code support for BlobError
 OUTCOME_HPP_DECLARE_ERROR(qtils, BlobError);
 
 inline OUTCOME_CPP_DEFINE_CATEGORY(qtils, BlobError, e) {

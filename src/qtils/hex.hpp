@@ -12,10 +12,19 @@
 
 namespace qtils {
 
+  /**
+   * @struct Hex
+   * @brief Wrapper for hex encoding of byte sequences.
+   */
   struct Hex {
-    BytesIn v;
+    BytesIn v;  ///< Underlying byte sequence to be hex-encoded
   };
 
+  /**
+   * @brief Convert byte container wrapped in Hex to hexadecimal string.
+   * @param data Hex wrapper around BytesIn
+   * @return Uppercase hex-encoded string (2 chars per byte)
+   */
   inline std::string to_hex(const Hex &data) {
     static constexpr char hex_chars[] = "0123456789ABCDEF";
 
@@ -33,12 +42,14 @@ namespace qtils {
 
 }  // namespace qtils
 
+/// Formatter for BytesIn with support for 0x/0X prefix and short/long modes
 template <>
 struct fmt::formatter<qtils::BytesIn> {
-  bool prefix = true;
-  bool full = false;
-  bool lower = true;
+  bool prefix = true;  ///< Show prefix (0x or 0X)
+  bool full = false;   ///< Show full content or abbreviated form
+  bool lower = true;   ///< Use lowercase hex digits
 
+  /// Parse format flags (0x, 0X, x, X)
   constexpr auto parse(format_parse_context &ctx) {
     auto it = ctx.begin();
     auto end = [&] { return it == ctx.end() or * it == '}'; };
@@ -67,6 +78,7 @@ struct fmt::formatter<qtils::BytesIn> {
 #endif
   }
 
+  /// Format BytesIn as hex string
   auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
@@ -84,12 +96,15 @@ struct fmt::formatter<qtils::BytesIn> {
   }
 };
 
+/// Formatter for Bytes (inherits BytesIn formatter)
 template <>
 struct fmt::formatter<qtils::Bytes> : fmt::formatter<qtils::BytesIn> {};
 
+/// Formatter for BytesOut (inherits BytesIn formatter)
 template <>
 struct fmt::formatter<qtils::BytesOut> : fmt::formatter<qtils::BytesIn> {};
 
+/// Formatter for Hex (delegates to BytesIn formatter)
 template <>
 struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
   auto format(const qtils::Hex &v, format_context &ctx) const {

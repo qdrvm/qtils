@@ -10,6 +10,7 @@
 using qtils::Blob;
 using qtils::byte_t;
 
+/// Case-insensitive string comparison helper
 bool iequals(std::string_view a, std::string_view b) {
   return a.size() == b.size()
       && std::ranges::equal(
@@ -21,10 +22,10 @@ bool iequals(std::string_view a, std::string_view b) {
 }
 
 /**
- * @given hex string
- * @when create blob object from this string using fromHex method
- * @then blob object is created and contains expected byte representation of the
- * hex string
+ * @test Blob creation from valid hex-encoded string.
+ * @given valid hex-encoded string
+ * @when creating a Blob from it
+ * @then the Blob is successfully created and contains the correct data
  */
 TEST(BlobTest, CreateFromValidHex) {
   std::string hex32 = "00ff";
@@ -38,9 +39,10 @@ TEST(BlobTest, CreateFromValidHex) {
 }
 
 /**
- * @given non hex string
- * @when try to create a Blob using fromHex on that string
- * @then error is returned
+ * @test Blob creation fails on non-hex string.
+ * @given string that is not hex-encoded
+ * @when creating a Blob from it
+ * @then an error is returned
  */
 TEST(BlobTest, CreateFromNonHex) {
   std::string not_hex = "nothex";
@@ -51,9 +53,10 @@ TEST(BlobTest, CreateFromNonHex) {
 }
 
 /**
- * @given string with odd length
- * @when try to create a Blob using fromHex on that string
- * @then error is returned
+ * @test Blob creation fails on odd-length hex string.
+ * @given hex-encoded string of odd length
+ * @when creating a Blob from it
+ * @then an error is returned
  */
 TEST(BlobTest, CreateFromOddLengthHex) {
   std::string odd_hex = "0a1";
@@ -64,9 +67,10 @@ TEST(BlobTest, CreateFromOddLengthHex) {
 }
 
 /**
- * @given string with odd length
- * @when try to create a Blob using fromHex on that string
- * @then error is returned
+ * @test Blob creation fails on incorrect hex length.
+ * @given hex-encoded string of incorrect length
+ * @when creating a Blob with a fixed size from it
+ * @then an error is returned
  */
 TEST(BlobTest, CreateFromWrongLendthHex) {
   std::string odd_hex = "00ff00";
@@ -77,10 +81,10 @@ TEST(BlobTest, CreateFromWrongLendthHex) {
 }
 
 /**
- * @given arbitrary string
- * @when create blob object from this string using fromString method
- * @then blob object is created and contains expected byte representation of
- * given string
+ * @test Blob creation from valid string.
+ * @given string of valid length
+ * @when creating a Blob from it using fromString
+ * @then the Blob is successfully created and contains the expected data
  */
 TEST(BlobTest, CreateFromValidString) {
   std::array<byte_t, 5> expected{'a', 's', 'd', 'f', 'g'};
@@ -94,11 +98,10 @@ TEST(BlobTest, CreateFromValidString) {
 }
 
 /**
- * @given arbitrary string
- * @when create blob object from this string using fromString method where @and
- * length of the string is not equal to the size of the blob
- * @then blob object is not created, fromString method returns error message
- * error
+ * @test Blob creation fails on string of incorrect length.
+ * @given string of incorrect length
+ * @when creating a Blob from it using fromString
+ * @then an error is returned
  */
 TEST(BlobTest, CreateFromInvalidString) {
   std::string valid_str{"0"};
@@ -109,9 +112,10 @@ TEST(BlobTest, CreateFromInvalidString) {
 }
 
 /**
- * @given arbitrary string and its hex representation
- * @when blob is created from that string
- * @then blob::toHex() method returns given hex representation
+ * @test Conversion of Blob content to hex string.
+ * @given string content
+ * @when creating a Blob and converting it to hex
+ * @then the result matches the expected hex representation
  */
 TEST(BlobTest, ToHexTest) {
   std::string str = "hello";
@@ -125,9 +129,10 @@ TEST(BlobTest, ToHexTest) {
 }
 
 /**
- * @given byte array with characters
- * @when blob is created from that byte array
- * @then blob.toString() returns the string made of that characters
+ * @test Conversion of Blob content to string.
+ * @given binary content
+ * @when creating a Blob and calling toString
+ * @then the result matches the original string
  */
 TEST(BlobTest, ToStringTest) {
   std::array<byte_t, 5> expected{'a', 's', 'd', 'f', 'g'};

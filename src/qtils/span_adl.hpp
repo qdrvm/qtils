@@ -12,23 +12,41 @@
 #include <qtils/cxx20/lexicographical_compare_three_way.hpp>
 #include <span>
 
-// `std::span` doesn't have comparison operator functions.
-// Can't add function to neither `std::span` nor `namespace std`.
-// `SpanAdl{span}` wraps span and allows writing functions for `SpanAdl`.
-// `SpanAdl` overload will be selected by ADL.
+/**
+ * @brief Adapter struct to enable comparison of std::span via ADL.
+ *
+ * Since std::span does not define its own comparison operators,
+ * this wrapper is used to define ordering and equality semantics
+ * for span-like objects in a consistent and extensible way.
+ *
+ * @tparam T Element type of the span
+ */
 template <typename T>
 struct SpanAdl {
-  std::span<T> v;
+  std::span<T> v;  ///< Wrapped span instance
 };
+
+/// Deduction guide for SpanAdl
 template <typename T>
 SpanAdl(T &&t) -> SpanAdl<typename decltype(std::span{t})::element_type>;
 
+/**
+ * @brief 3-way comparison operator for SpanAdl vs span-like object
+ *
+ * Performs byte-wise comparison for byte spans, or lexicographical
+ * comparison otherwise.
+ *
+ * @tparam T Element type of the span
+ * @param lhs Left-hand SpanAdl
+ * @param rhs Right-hand span-like object
+ * @return std::strong_ordering, std::partial_ordering or std::weak_ordering
+ */
 template <typename T>
-auto operator<=>(const SpanAdl<T> &l_, const auto &r_)
-  requires(requires { std::span<const T>{r_}; })
+auto operator<=>(const SpanAdl<T> &lhs, const auto &rhs)
+  requires(requires { std::span<const T>{rhs}; })
 {
-  auto &[l] = l_;
-  std::span r{r_};
+  auto &[l] = lhs;
+  std::span r{rhs};
   if constexpr (std::is_same_v<std::remove_cvref_t<T>, uint8_t>) {
     auto n = std::min(l.size(), r.size());
     auto c = std::memcmp(l.data(), r.data(), n) <=> 0;
@@ -38,10 +56,20 @@ auto operator<=>(const SpanAdl<T> &l_, const auto &r_)
       l.begin(), l.end(), r.begin(), r.end());
 }
 
+/**
+ * @brief Equality operator for SpanAdl vs span-like object
+ *
+ * Uses 3-way comparison to check full equality.
+ *
+ * @tparam T Element type of the span
+ * @param lhs Left-hand SpanAdl
+ * @param rhs Right-hand span-like object
+ * @return true if spans are equal in size and content
+ */
 template <typename T>
-bool operator==(const SpanAdl<T> &l_, const auto &r_)
-  requires(requires { std::span<const T>{r_}; })
+bool operator==(const SpanAdl<T> &lhs, const auto &rhs)
+  requires(requires { std::span<const T>{rhs}; })
 {
-  std::span r{r_};
-  return l_.v.size() == r.size() and (l_ <=> r) == 0;
+  std::span r{rhs};
+  return lhs.v.size() == r.size() and (lhs <=> r) == 0;
 }

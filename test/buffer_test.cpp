@@ -11,6 +11,7 @@
 using qtils::Buffer;
 using namespace std::string_literals;
 
+/// Case-insensitive string comparison helper
 bool iequals(std::string_view a, std::string_view b) {
   return a.size() == b.size()
       and std::ranges::equal(
@@ -22,11 +23,13 @@ bool iequals(std::string_view a, std::string_view b) {
 }
 
 /**
+ * @test Writing data into buffer via various put-methods.
  * @given empty buffer
- * @when put different stuff in this buffer
- * @then result matches expectation
+ * @when data is sequentially appended using string, integers, and another
+ * buffer
+ * @then resulting buffer size and content match expectations
  */
-TEST(Common, BufferPut) {
+TEST(BufferTest, Put) {
   Buffer b;
   ASSERT_EQ(b.size(), 0);
 
@@ -50,7 +53,6 @@ TEST(Common, BufferPut) {
   b.put(e);
   ASSERT_EQ(b.size(), 23);
 
-  // test iterators
   int i = 0;
   for (const auto &byte : b) {
     i++;
@@ -63,24 +65,27 @@ TEST(Common, BufferPut) {
 }
 
 /**
- * @given buffer containing bytes {1,2,3}
- * @when put is applied with another buffer {4,5,6} as parameter
- * @then content of current buffer changes to {1,2,3,4,5,6}
+ * @test Buffer appending.
+ * @given a buffer with initial content and another buffer
+ * @when appending the second buffer using put
+ * @then the first buffer contains the concatenated result
  */
-TEST(Common, put) {
+TEST(BufferTest, PutBuffer) {
   Buffer current_buffer = {1, 2, 3};
   Buffer another_buffer = {4, 5, 6};
   auto &buffer = current_buffer.put(another_buffer);
-  ASSERT_EQ(&buffer, &current_buffer);  // line to the same buffer is returned
+  ASSERT_EQ(&buffer, &current_buffer);
   Buffer result = {1, 2, 3, 4, 5, 6};
   ASSERT_EQ(buffer, result);
 }
 
 /**
- * @when create buffer using different constructors
- * @then expected buffer is created
+ * @test Buffer initialization.
+ * @given various buffer initialization methods
+ * @when constructing buffers via initializer list, copy, and array
+ * @then the created buffers are equivalent and contain the same data
  */
-TEST(Common, BufferInit) {
+TEST(BufferTest, Init) {
   std::array<uint8_t, 5> data = {1, 2, 3, 4, 5};
 
   Buffer b{1, 2, 3, 4, 5};

@@ -21,8 +21,16 @@
 #include <qtils/unhex.hpp>
 
 namespace qtils {
+
   /**
-   * @brief Class represents arbitrary (including empty) byte buffer.
+   * @class SLBuffer
+   * @brief Size-limited dynamic byte buffer with serialization helpers.
+   *
+   * SLBuffer is a size-limited extension over a std::vector-based container,
+   * with additional APIs for appending primitive types and serializing data.
+   *
+   * @tparam MaxSize Maximum allowed size for this buffer
+   * @tparam Allocator Type of allocator to use
    */
   template <size_t MaxSize, typename Allocator = std::allocator<uint8_t>>
   class SLBuffer : public SLVector<uint8_t, MaxSize, Allocator> {
@@ -34,57 +42,55 @@ namespace qtils {
 
     SLBuffer() = default;
 
-    /**
-     * @brief lvalue construct buffer from a byte vector
-     */
+    /// Construct buffer from a base vector (copy or move)
     explicit SLBuffer(const typename Base::Base &other) : Base(other) {}
     SLBuffer(typename Base::Base &&other) : Base(std::move(other)) {}
 
+    /// Construct buffer from another SLBuffer (copy or move)
     template <size_t OtherMaxSize>
     SLBuffer(const OtherSLBuffer<OtherMaxSize> &other) : Base(other) {}
 
     template <size_t OtherMaxSize>
     SLBuffer(OtherSLBuffer<OtherMaxSize> &&other) : Base(std::move(other)) {}
 
+    /// Construct buffer from a BufferView
     SLBuffer(const BufferView &s) : Base(s.begin(), s.end()) {}
 
+    /// Construct buffer from an array
     template <size_t N>
     explicit SLBuffer(const std::array<typename Base::value_type, N> &other)
         : Base(other.begin(), other.end()) {}
 
+    /// Construct buffer from raw pointer range
     SLBuffer(const uint8_t *begin, const uint8_t *end) : Base(begin, end) {};
 
     using Base::Base;
     using Base::operator=;
 
+    /// Reserve additional space in the buffer
     SLBuffer &reserve(size_t size) {
       Base::reserve(size);
       return *this;
     }
 
+    /// Resize the buffer
     SLBuffer &resize(size_t size) {
       Base::resize(size);
       return *this;
     }
 
+    /// Append raw bytes from BufferView
     SLBuffer &operator+=(const BufferView &view) {
       return put(view);
     }
 
-    /**
-     * @brief Put a 8-bit {@param n} in this buffer.
-     * @return this buffer, suitable for chaining.
-     */
+    /// Append a uint8_t in binary form
     SLBuffer &putUint8(uint8_t n) {
       SLBuffer::push_back(n);
       return *this;
     }
 
-    /**
-     * @brief Put a 32-bit {@param n} number in this buffer. Will be serialized
-     * as big-endian number.
-     * @return this buffer, suitable for chaining.
-     */
+    /// Append a uint32_t in big-endian form
     SLBuffer &putUint32(uint32_t n) {
       n = htobe32(n);
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -95,11 +101,7 @@ namespace qtils {
       return *this;
     }
 
-    /**
-     * @brief Put a 64-bit {@param n} number in this buffer. Will be serialized
-     * as big-endian number.
-     * @return this buffer, suitable for chaining.
-     */
+    /// Append a uint64_t in big-endian form
     SLBuffer &putUint64(uint64_t n) {
       n = htobe64(n);
       // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -110,122 +112,98 @@ namespace qtils {
       return *this;
     }
 
-    /**
-     * @brief Put a string into byte buffer
-     * @param s arbitrary string
-     * @return this buffer, suitable for chaining.
-     */
+    /// Append a string as bytes
     SLBuffer &put(std::string_view view) {
       Base::insert(Base::end(), view.begin(), view.end());
       return *this;
     }
 
-    /**
-     * @brief Put a sequence of bytes as view into byte buffer
-     * @param view arbitrary span of bytes
-     * @return this buffer, suitable for chaining.
-     */
+    /// Append raw bytes from BufferView
     SLBuffer &put(const qtils::BufferView &view) {
       Base::insert(Base::end(), view.begin(), view.end());
       return *this;
     }
 
-    /**
-     * @brief getter for vector of bytes
-     */
+    /// Access as std::vector (const ref)
     const std::vector<uint8_t> &asVector() const {
       return static_cast<const typename Base::Base &>(*this);
     }
 
+    /// Access as std::vector (ref)
     std::vector<uint8_t> &asVector() {
       return static_cast<typename Base::Base &>(*this);
     }
 
+    /// Extract as std::vector (copy)
     std::vector<uint8_t> toVector() & {
       return static_cast<typename Base::Base &>(*this);
     }
 
+    /// Extract as std::vector (move)
     std::vector<uint8_t> toVector() && {
       return std::move(static_cast<typename Base::Base &>(*this));
     }
 
-    /**
-     * Returns a copy of a part of the buffer
-     * Works alike subspan() of std::span
-     */
+    /// Get a sub-buffer (like subspan)
     SLBuffer subbuffer(size_t offset = 0, size_t length = -1) const {
       return SLBuffer(view(offset, length));
     }
 
-    BufferView view(size_t offset = 0, size_t length = -1) const {
+    /// Get a view of this buffer
+    [[nodiscard]] BufferView view(size_t offset = 0, size_t length = -1) const {
       return std::span(*this).subspan(offset, length);
     }
 
+    /// Compile-time view with fixed offset and length
     template <size_t Offset, size_t Length>
-    BufferView view() const {
+    [[nodiscard]] BufferView view() const {
       return std::span(*this).template subspan<Offset, Length>();
     }
 
-    /**
-     * @brief encode bytearray as hex
-     * @return hex-encoded string
-     */
-    std::string toHex() const {
+    /// Convert buffer to hex string
+    [[nodiscard]] std::string toHex() const {
       return to_hex(Hex{*this});
     }
 
-    /**
-     * @brief Construct SLBuffer from hex string
-     * @param hex hex-encoded string
-     * @return result containing constructed buffer if input string is
-     * hex-encoded string.
-     */
+    /// Construct buffer from hex string
     static outcome::result<SLBuffer> fromHex(std::string_view hex) {
       OUTCOME_TRY(bytes, unhex(hex));
       return outcome::success(SLBuffer(std::move(bytes)));
     }
 
-    /**
-     * @brief return content of bytearray as string
-     * @note Does not ensure correct encoding
-     * @return string
-     */
-    std::string toString() const {
+    /// Convert buffer to raw string (copy)
+    [[nodiscard]] std::string toString() const {
       return std::string{Base::cbegin(), Base::cend()};
     }
 
-    /**
-     * @brief return content of bytearray as a string copy data
-     * @note Does not ensure correct encoding
-     * @return string
-     */
-    std::string_view asString() const {
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+    /// Get buffer content as string_view
+    [[nodiscard]] std::string_view asString() const {
       return std::string_view(
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
           reinterpret_cast<const char *>(Base::data()), Base::size());
     }
 
-    /**
-     * @brief stores content of a string to byte array
-     */
+    /// Construct buffer from string
     static SLBuffer fromString(const std::string_view &src) {
       return {src.begin(), src.end()};
     }
   };
 
+  /// Output operator for SLBuffer
   template <size_t MaxSize>
   inline std::ostream &operator<<(
       std::ostream &os, const SLBuffer<MaxSize> &buffer) {
     return os << BufferView(buffer);
   }
 
+  /// Type alias for unbounded SLBuffer
   using Buffer = SLBuffer<std::numeric_limits<size_t>::max()>;
 
+  /// Empty buffer constant
   inline static const Buffer kEmptyBuffer{};
 
   namespace literals {
-    /// creates a buffer filled with characters from the original string
-    /// mind that it does not perform unhexing, there is ""_unhex for it
+    /// Literal operator to create buffer from raw string characters
     inline Buffer operator""_buf(const char *c, size_t s) {
       // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
       return {std::vector<uint8_t>(c, c + s)};
@@ -233,6 +211,7 @@ namespace qtils {
   }  // namespace literals
 }  // namespace qtils
 
+/// std::hash specialization for SLBuffer
 template <size_t N>
 struct std::hash<qtils::SLBuffer<N>> {
   size_t operator()(const qtils::SLBuffer<N> &x) const {
@@ -240,5 +219,6 @@ struct std::hash<qtils::SLBuffer<N>> {
   }
 };
 
+/// fmt::formatter specialization for Buffer
 template <>
 struct fmt::formatter<qtils::Buffer> : fmt::formatter<qtils::BufferView> {};

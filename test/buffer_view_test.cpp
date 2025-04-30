@@ -13,6 +13,12 @@
 using qtils::BufferView;
 using Span = std::span<uint8_t>;
 
+/**
+ * @test Default-constructed BufferView.
+ * @given default-constructed BufferView
+ * @when checking its size and content
+ * @then the view is empty and has size 0
+ */
 TEST(BufferView, Constructor_default) {
   BufferView v;
 
@@ -20,6 +26,12 @@ TEST(BufferView, Constructor_default) {
   EXPECT_EQ(v.size(), 0);
 }
 
+/**
+ * @test BufferView constructed from span.
+ * @given a span of bytes
+ * @when constructing a BufferView from it
+ * @then the BufferView reflects the content and size of the span
+ */
 TEST(BufferView, Constructor_from_span) {
   uint8_t c_arr[] = {1, 2, 3, '1', '2', '3'};
   Span span(std::begin(c_arr), std::end(c_arr));
@@ -30,6 +42,12 @@ TEST(BufferView, Constructor_from_span) {
   EXPECT_EQ(view_span.size(), std::size(c_arr));
 }
 
+/**
+ * @test BufferView constructed from vector.
+ * @given a vector of bytes
+ * @when constructing a BufferView from it
+ * @then the BufferView reflects the content and size of the vector
+ */
 TEST(BufferView, Constructor_from_vector) {
   std::vector<uint8_t> vec = {1, 2, 3, '1', '2', '3'};
 
@@ -39,6 +57,12 @@ TEST(BufferView, Constructor_from_vector) {
   EXPECT_EQ(view_vec.size(), vec.size());
 }
 
+/**
+ * @test BufferView constructed from array.
+ * @given a std::array of bytes
+ * @when constructing a BufferView from it
+ * @then the BufferView reflects the content and size of the array
+ */
 TEST(BufferView, Constructor_from_array) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
 
@@ -48,6 +72,12 @@ TEST(BufferView, Constructor_from_array) {
   EXPECT_EQ(view_arr.size(), arr.size());
 }
 
+/**
+ * @test BufferView constructed from another BufferView.
+ * @given an existing BufferView
+ * @when constructing another BufferView from it
+ * @then the new BufferView has the same content and size
+ */
 TEST(BufferView, Constructor_from_BufferView) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
   BufferView view_arr(arr);
