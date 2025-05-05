@@ -8,22 +8,27 @@
 
 #include <array>
 #include <cstdint>
+#include <qtils/byte_arr.hpp>
+#include <qtils/byte_vec.hpp>
 #include <span>
-#include <vector>
 
 namespace qtils {
-  using Bytes = std::vector<uint8_t>;
+
+  // Deprecate obsolete names
+  using Bytes [[deprecated("Use qtils::ByteVec instead")]] = ByteVec;
+  using Buffer [[deprecated("Use qtils::ByteVec instead")]] = ByteVec;
   template <size_t N>
-  class Blob;
+  using BytesN [[deprecated("Use qtils::ByteArr instead")]] = ByteArr<N>;
   template <size_t N>
-  using BytesN [[deprecated("Use qtils::Blob instead")]] = Blob<N>;
+  using Blob [[deprecated("Use qtils::ByteArr instead")]] = ByteArr<N>;
+  template <size_t N>
+  using ByteArray [[deprecated("Use qtils::ByteArr instead")]] = ByteArr<N>;
+
+  using BufferView [[deprecated("Use qtils::ByteView instead")]] = ByteView;
+  using ByteSpan [[deprecated("Use qtils::ByteView instead")]] = ByteView;
+
   using BytesIn = std::span<const uint8_t>;
   using BytesOut = std::span<uint8_t>;
-
-  template <size_t N>
-  using ByteArray = std::array<uint8_t, N>;
-
-  using ByteSpan = std::span<const unsigned char>;
 
   template <size_t N>
   using FixedByteSpan = std::span<const unsigned char, N>;
@@ -35,8 +40,4 @@ namespace qtils {
 
   template <typename T>
   concept AsBytes = requires(const T &t) { BytesIn{t}; };
-
-  inline Bytes asVec(BytesIn v) {
-    return {v.begin(), v.end()};
-  }
 }  // namespace qtils

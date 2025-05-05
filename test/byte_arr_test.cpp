@@ -5,10 +5,10 @@
  */
 
 #include <gtest/gtest.h>
-#include <qtils/blob.hpp>
+#include <qtils/byte_arr.hpp>
 
-using qtils::Blob;
 using qtils::byte_t;
+using qtils::ByteArr;
 
 /// Case-insensitive string comparison helper
 bool iequals(std::string_view a, std::string_view b) {
@@ -27,11 +27,11 @@ bool iequals(std::string_view a, std::string_view b) {
  * @when creating a Blob from it
  * @then the Blob is successfully created and contains the correct data
  */
-TEST(BlobTest, CreateFromValidHex) {
+TEST(ByteArrTest, CreateFromValidHex) {
   std::string hex32 = "00ff";
   std::array<byte_t, 2> expected{0, 255};
 
-  auto result = Blob<2>::fromHex(hex32);
+  auto result = ByteArr<2>::fromHex(hex32);
   ASSERT_NO_THROW({
     auto blob = result.value();
     EXPECT_EQ(blob, expected);
@@ -44,10 +44,10 @@ TEST(BlobTest, CreateFromValidHex) {
  * @when creating a Blob from it
  * @then an error is returned
  */
-TEST(BlobTest, CreateFromNonHex) {
+TEST(ByteArrTest, CreateFromNonHex) {
   std::string not_hex = "nothex";
 
-  auto result = Blob<2>::fromHex(not_hex);
+  auto result = ByteArr<2>::fromHex(not_hex);
   ASSERT_NO_THROW({ result.error(); })
       << "fromHex returned a value instead of error";
 }
@@ -58,10 +58,10 @@ TEST(BlobTest, CreateFromNonHex) {
  * @when creating a Blob from it
  * @then an error is returned
  */
-TEST(BlobTest, CreateFromOddLengthHex) {
+TEST(ByteArrTest, CreateFromOddLengthHex) {
   std::string odd_hex = "0a1";
 
-  auto result = Blob<2>::fromHex(odd_hex);
+  auto result = ByteArr<2>::fromHex(odd_hex);
   ASSERT_NO_THROW({ result.error(); })
       << "fromHex returned a value instead of error";
 }
@@ -72,10 +72,10 @@ TEST(BlobTest, CreateFromOddLengthHex) {
  * @when creating a Blob with a fixed size from it
  * @then an error is returned
  */
-TEST(BlobTest, CreateFromWrongLendthHex) {
+TEST(ByteArrTest, CreateFromWrongLendthHex) {
   std::string odd_hex = "00ff00";
 
-  auto result = Blob<2>::fromHex(odd_hex);
+  auto result = ByteArr<2>::fromHex(odd_hex);
   ASSERT_NO_THROW({ result.error(); })
       << "fromHex returned a value instead of error";
 }
@@ -86,11 +86,11 @@ TEST(BlobTest, CreateFromWrongLendthHex) {
  * @when creating a Blob from it using fromString
  * @then the Blob is successfully created and contains the expected data
  */
-TEST(BlobTest, CreateFromValidString) {
+TEST(ByteArrTest, CreateFromValidString) {
   std::array<byte_t, 5> expected{'a', 's', 'd', 'f', 'g'};
   std::string valid_str{expected.begin(), expected.end()};
 
-  auto result = Blob<5>::fromString(valid_str);
+  auto result = ByteArr<5>::fromString(valid_str);
   ASSERT_NO_THROW({
     auto blob = result.value();
     EXPECT_EQ(blob, expected);
@@ -103,10 +103,10 @@ TEST(BlobTest, CreateFromValidString) {
  * @when creating a Blob from it using fromString
  * @then an error is returned
  */
-TEST(BlobTest, CreateFromInvalidString) {
+TEST(ByteArrTest, CreateFromInvalidString) {
   std::string valid_str{"0"};
 
-  auto result = Blob<5>::fromString(valid_str);
+  auto result = ByteArr<5>::fromString(valid_str);
   ASSERT_NO_THROW({ result.error(); })
       << "fromString returned a value instead of error";
 }
@@ -117,13 +117,13 @@ TEST(BlobTest, CreateFromInvalidString) {
  * @when creating a Blob and converting it to hex
  * @then the result matches the expected hex representation
  */
-TEST(BlobTest, ToHexTest) {
+TEST(ByteArrTest, ToHexTest) {
   std::string str = "hello";
   std::string expected_hex = "68656c6c6f";
 
-  auto blob_res = Blob<5>::fromString(str);
+  auto blob_res = ByteArr<5>::fromString(str);
   ASSERT_NO_THROW({
-    Blob<5> value = blob_res.value();
+    ByteArr<5> value = blob_res.value();
     ASSERT_TRUE(iequals(value.toHex(), expected_hex));
   });
 }
@@ -134,10 +134,10 @@ TEST(BlobTest, ToHexTest) {
  * @when creating a Blob and calling toString
  * @then the result matches the original string
  */
-TEST(BlobTest, ToStringTest) {
+TEST(ByteArrTest, ToStringTest) {
   std::array<byte_t, 5> expected{'a', 's', 'd', 'f', 'g'};
 
-  Blob<5> blob;
+  ByteArr<5> blob;
   std::ranges::copy(expected, blob.begin());
 
   ASSERT_TRUE(

@@ -11,7 +11,7 @@
 #include <fmt/format.h>
 #include <boost/functional/hash.hpp>
 
-#include <qtils/buffer_view.hpp>
+#include <qtils/byte_view.hpp>
 #include <qtils/hex.hpp>
 #include <qtils/outcome.hpp>
 #include <qtils/span_adl.hpp>
@@ -33,8 +33,8 @@
  */
 #define JAM_BLOB_STRICT_TYPEDEF(space_name, class_name, blob_size)             \
   namespace space_name {                                                       \
-    struct class_name : public ::qtils::Blob<blob_size> {                      \
-      using Base = ::qtils::Blob<blob_size>;                                   \
+    struct class_name : public ::qtils::ByteArr<blob_size> {                   \
+      using Base = ::qtils::ByteArr<blob_size>;                                \
                                                                                \
       class_name() = default;                                                  \
       class_name(const class_name &) = default;                                \
@@ -74,7 +74,7 @@
       }                                                                        \
                                                                                \
       static ::outcome::result<class_name> fromSpan(                           \
-          const ::qtils::BufferView &span) {                                   \
+          const ::qtils::ByteView &span) {                                     \
         OUTCOME_TRY(blob, Base::fromSpan(span));                               \
         return class_name{std::move(blob)};                                    \
       }                                                                        \
@@ -112,7 +112,7 @@ namespace qtils {
   using byte_t = uint8_t;
 
   /**
-   * @class Blob
+   * @class ByteArr
    * @brief Fixed-size binary buffer abstraction with utility methods.
    *
    * Provides size-bound operations, safe construction from various sources,
@@ -121,7 +121,7 @@ namespace qtils {
    * @tparam size_ Fixed size of the blob in bytes
    */
   template <size_t size_>
-  class Blob : public std::array<byte_t, size_> {
+  class ByteArr : public std::array<byte_t, size_> {
     using Array = std::array<byte_t, size_>;
 
    public:
@@ -131,10 +131,10 @@ namespace qtils {
     // NOLINTEND(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
 
     /// Default constructor initializes to zero
-    constexpr Blob() : Array{} {}
+    constexpr ByteArr() : Array{} {}
 
     /// Initializes blob from initializer list (truncates if too long)
-    constexpr Blob(std::initializer_list<byte_t> list) {
+    constexpr ByteArr(std::initializer_list<byte_t> list) {
       std::copy(list.begin(), list.end(), this->begin());
     }
 
@@ -144,7 +144,7 @@ namespace qtils {
     }
 
     /// Initializes from std::array<byte_t, size_>
-    constexpr explicit Blob(const Array &l) : Array{l} {}
+    constexpr explicit ByteArr(const Array &l) : Array{l} {}
 
     /// Get size of the blob (in bytes)
     static constexpr size_t size() {
@@ -166,11 +166,11 @@ namespace qtils {
      * @param data string with exactly `size_` bytes
      * @return Blob if successful or error if size mismatches
      */
-    static outcome::result<Blob<size_>> fromString(std::string_view data) {
+    static outcome::result<ByteArr> fromString(std::string_view data) {
       if (data.size() != size_) {
         return BlobError::INCORRECT_LENGTH;
       }
-      Blob<size_> result;
+      ByteArr result;
       std::ranges::copy(data, result.begin());
       return result;
     }
@@ -180,8 +180,8 @@ namespace qtils {
      * @param hex string with 2*size_ characters
      * @return Blob if hex is valid and of correct length
      */
-    static outcome::result<Blob<size_>> fromHex(std::string_view hex) {
-      OUTCOME_TRY(res, unhex(hex));
+    static outcome::result<ByteArr> fromHex(std::string_view hex) {
+      OUTCOME_TRY(res, unhex<ByteArr>(hex));
       return fromSpan(res);
     }
 
@@ -190,9 +190,8 @@ namespace qtils {
      * @param hex string prefixed with "0x"
      * @return Blob if hex is valid and of correct length
      */
-    static outcome::result<Blob<size_>> fromHexWithPrefix(
-        std::string_view hex) {
-      OUTCOME_TRY(res, unhex0x(hex));
+    static outcome::result<ByteArr> fromHexWithPrefix(std::string_view hex) {
+      OUTCOME_TRY(res, unhex0x<ByteArr>(hex));
       return fromSpan(res);
     }
 
@@ -201,22 +200,22 @@ namespace qtils {
      * @param span binary view (BufferView)
      * @return Blob if span is of correct length
      */
-    static outcome::result<Blob<size_>> fromSpan(const BufferView &span) {
+    static outcome::result<ByteArr> fromSpan(std::span<const uint8_t> span) {
       if (span.size() != size_) {
         return BlobError::INCORRECT_LENGTH;
       }
-      Blob<size_> blob;
+      ByteArr blob;
       std::ranges::copy(span, blob.begin());
       return blob;
     }
 
     /// 3-way comparison operator
-    auto operator<=>(const Blob<size_> &other) const {
+    auto operator<=>(const ByteArr<size_> &other) const {
       return SpanAdl{*this} <=> other;
     }
 
     /// Equality operator
-    bool operator==(const Blob<size_> &other) const {
+    bool operator==(const ByteArr<size_> &other) const {
       return SpanAdl{*this} == other;
     }
   };
@@ -225,66 +224,68 @@ namespace qtils {
    * @deprecated Use Blob<N> instead.
    */
   template <size_t N>
-  using BytesN [[deprecated("Use Blob<N> instead")]] = Blob<N>;
+  using BytesN [[deprecated("Use ByteArr<N> instead")]] = ByteArr<N>;
 
   /// Output operator to stream as hex string
   template <size_t N>
-  inline std::ostream &operator<<(std::ostream &os, const Blob<N> &blob) {
+  inline std::ostream &operator<<(std::ostream &os, const ByteArr<N> &blob) {
     return os << blob.toHex();
   }
 
 }  // namespace qtils
 
-/// std::hash specialization for Blob<N>
+/// std::hash specialization for ByteArr<N>
 template <size_t N>
-struct std::hash<qtils::Blob<N>> {
-  auto operator()(const qtils::Blob<N> &blob) const {
+struct std::hash<qtils::ByteArr<N>> {
+  auto operator()(const qtils::ByteArr<N> &blob) const {
     return boost::hash_range(blob.data(), blob.data() + N);  // NOLINT
   }
 };
 
-/// fmt::formatter specialization for Blob<N>
+/// fmt::formatter specialization for ByteArr<N>
 template <size_t N>
-struct fmt::formatter<qtils::Blob<N>> {
-  // Presentation format: 's' - short, 'l' - long.
-  char presentation = N > 4 ? 's' : 'l';
+struct fmt::formatter<qtils::ByteArr<N>> : fmt::formatter<qtils::Hex> {};
 
-  // Parses format specifications of the form ['s' | 'l'].
-  constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
-    // Parse the presentation format and store it in the formatter:
-    auto it = ctx.begin(), end = ctx.end();
-    if (it != end && (*it == 's' || *it == 'l')) {
-      presentation = *it++;
-    }
-
-    // Check if reached the end of the range:
-    if (it != end && *it != '}') {
-      throw format_error("invalid format");
-    }
-
-    // Return an iterator past the end of the parsed range:
-    return it;
-  }
-
-  // Formats the Blob using the parsed format specification (presentation)
-  // stored in this formatter.
-  template <typename FormatContext>
-  auto format(const qtils::Blob<N> &blob, FormatContext &ctx) const
-      -> decltype(ctx.out()) {
-    if (presentation == 's') {
-      if constexpr (N > 4) {
-        uint16_t head = static_cast<uint16_t>(blob[1])
-            | (static_cast<uint16_t>(blob[0]) << 8);
-        uint16_t tail = static_cast<uint16_t>(blob[blob.size() - 1])
-            | (static_cast<uint16_t>(blob[blob.size() - 2]) << 8);
-        return fmt::format_to(ctx.out(), "0x{:04x}…{:04x}", head, tail);
-      }
-      // else fallback to normal print
-    }
-
-    return fmt::format_to(ctx.out(), "0x{}", blob.toHex());
-  }
-};
+// {
+//   // Presentation format: 's' - short, 'l' - long.
+//   char presentation = N > 4 ? 's' : 'l';
+//
+//   // Parses format specifications of the form ['s' | 'l'].
+//   constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
+//     // Parse the presentation format and store it in the formatter:
+//     auto it = ctx.begin(), end = ctx.end();
+//     if (it != end && (*it == 's' || *it == 'l')) {
+//       presentation = *it++;
+//     }
+//
+//     // Check if reached the end of the range:
+//     if (it != end && *it != '}') {
+//       throw format_error("invalid format");
+//     }
+//
+//     // Return an iterator past the end of the parsed range:
+//     return it;
+//   }
+//
+//   // Formats the ByteArr using the parsed format specification (presentation)
+//   // stored in this formatter.
+//   template <typename FormatContext>
+//   auto format(const qtils::ByteArr<N> &blob, FormatContext &ctx) const
+//       -> decltype(ctx.out()) {
+//     if (presentation == 's') {
+//       if constexpr (N > 4) {
+//         uint16_t head = static_cast<uint16_t>(blob[1])
+//             | (static_cast<uint16_t>(blob[0]) << 8);
+//         uint16_t tail = static_cast<uint16_t>(blob[blob.size() - 1])
+//             | (static_cast<uint16_t>(blob[blob.size() - 2]) << 8);
+//         return fmt::format_to(ctx.out(), "0x{:04x}…{:04x}", head, tail);
+//       }
+//       // else fallback to normal print
+//     }
+//
+//     return fmt::format_to(ctx.out(), "0x{}", blob.toHex());
+//   }
+// };
 
 /// Declares outcome error code support for BlobError
 OUTCOME_HPP_DECLARE_ERROR(qtils, BlobError);

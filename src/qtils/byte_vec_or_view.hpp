@@ -8,20 +8,20 @@
 
 #include <type_traits>
 
-#include <qtils/buffer.hpp>
+#include <qtils/byte_vec.hpp>
 
 namespace qtils {
 
   /**
-   * @class BufferOrView
+   * @class ByteVecOrView
    * @brief Represents either an owned buffer or a non-owning view.
    *
    * This class is a lightweight wrapper around either a read-only view
-   * (`BufferView`) or a movable/owned buffer (`Buffer`).
-   * It supports implicit conversion to `BufferView` and can lazily
+   * (`ByteView`) or a movable/owned buffer (`ByteVec`).
+   * It supports implicit conversion to `ByteView` and can lazily
    * promote a view into a mutable buffer.
    */
-  class BufferOrView {
+  class ByteVecOrView {
     using Span = std::span<const uint8_t>;
 
     template <typename T>
@@ -30,48 +30,48 @@ namespace qtils {
     struct Moved {};  ///< Tag type indicating moved-from state
 
    public:
-    BufferOrView() = default;
-    ~BufferOrView() = default;
+    ByteVecOrView() = default;
+    ~ByteVecOrView() = default;
 
     /// Construct from a non-owning view
-    BufferOrView(const BufferView &view) : variant{view} {}
+    ByteVecOrView(const ByteView &view) : variant{view} {}
 
     /// Construct from a static array
     template <size_t N>
-    BufferOrView(const std::array<uint8_t, N> &array)
-        : variant{BufferView(array)} {}
+    ByteVecOrView(const std::array<uint8_t, N> &array)
+        : variant{ByteView(array)} {}
 
     /// Deleted: cannot construct from lvalue vector
-    BufferOrView(const std::vector<uint8_t> &vector) = delete;
+    ByteVecOrView(const std::vector<uint8_t> &vector) = delete;
 
     /// Construct from rvalue vector
-    BufferOrView(std::vector<uint8_t> &&vector)
-        : variant{Buffer{std::move(vector)}} {}
+    ByteVecOrView(std::vector<uint8_t> &&vector)
+        : variant{ByteVec{std::move(vector)}} {}
 
-    BufferOrView(const BufferOrView &) = delete;
-    BufferOrView(BufferOrView &&) noexcept = default;
+    ByteVecOrView(const ByteVecOrView &) = delete;
+    ByteVecOrView(ByteVecOrView &&) noexcept = default;
 
-    BufferOrView &operator=(const BufferOrView &) = delete;
-    BufferOrView &operator=(BufferOrView &&) = default;
+    ByteVecOrView &operator=(const ByteVecOrView &) = delete;
+    ByteVecOrView &operator=(ByteVecOrView &&) = default;
 
     /// Checks if buffer is owned
     bool isOwned() const {
       if (variant.index() == 2) {
-        throw std::logic_error{"Tried to use moved BufferOrView"};
+        throw std::logic_error{"Tried to use moved ByteVecOrView"};
       }
       return variant.index() == 1;
     }
 
     /// Get read-only view
-    [[nodiscard]] BufferView view() const {
+    [[nodiscard]] ByteView view() const {
       if (!isOwned()) {
-        return std::get<BufferView>(variant);
+        return std::get<ByteView>(variant);
       }
-      return BufferView{std::get<Buffer>(variant)};
+      return ByteView{std::get<ByteVec>(variant)};
     }
 
-    /// Implicit conversion to BufferView
-    operator BufferView() const {
+    /// Implicit conversion to ByteView
+    operator ByteView() const {
       return view();
     }
 
@@ -96,45 +96,45 @@ namespace qtils {
     }
 
     /// Returns mutable buffer reference (creates copy if needed)
-    Buffer &mut() {
+    ByteVec &mut() {
       if (!isOwned()) {
-        auto view = std::get<BufferView>(variant);
-        variant = Buffer{view};
+        auto view = std::get<ByteView>(variant);
+        variant = ByteVec{view};
       }
-      return std::get<Buffer>(variant);
+      return std::get<ByteVec>(variant);
     }
 
     /// Extract buffer (copy if view, clear internal state)
-    Buffer intoBuffer() & {
+    ByteVec intoBuffer() & {
       auto buffer = std::move(mut());
       variant = Moved{};
       return buffer;
     }
 
     /// Extract buffer (move overload)
-    Buffer intoBuffer() && {
+    ByteVec intoBuffer() && {
       return std::move(mut());
     }
 
    private:
-    std::variant<BufferView, Buffer, Moved> variant;
+    std::variant<ByteView, ByteVec, Moved> variant;
 
-    /// Equality operator for BufferOrView vs span-like object
+    /// Equality operator for ByteVecOrView vs span-like object
     template <typename T, typename = AsSpan<T>>
-    friend bool operator==(const BufferOrView &l, const T &r) {
+    friend bool operator==(const ByteVecOrView &l, const T &r) {
       return l.view() == Span{r};
     }
 
-    /// Equality operator for span-like object vs BufferOrView
+    /// Equality operator for span-like object vs ByteVecOrView
     template <typename T, typename = AsSpan<T>>
-    friend bool operator==(const T &l, const BufferOrView &r) {
+    friend bool operator==(const T &l, const ByteVecOrView &r) {
       return Span{l} == r.view();
     }
   };
 
 }  // namespace qtils
 
-/// Formatter specialization for BufferOrView (reuses BufferView)
+/// Formatter specialization for ByteVecOrView (reuses ByteView)
 template <>
-struct fmt::formatter<qtils::BufferOrView> : fmt::formatter<qtils::BufferView> {
+struct fmt::formatter<qtils::ByteVecOrView> : fmt::formatter<qtils::ByteView> {
 };

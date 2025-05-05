@@ -14,7 +14,7 @@
 #include <boost/container_hash/hash.hpp>
 #include <boost/operators.hpp>
 
-#include <qtils/buffer_view.hpp>
+#include <qtils/byte_view.hpp>
 #include <qtils/hex.hpp>
 #include <qtils/outcome.hpp>
 #include <qtils/size_limited_containers.hpp>
@@ -53,8 +53,8 @@ namespace qtils {
     template <size_t OtherMaxSize>
     SLBuffer(OtherSLBuffer<OtherMaxSize> &&other) : Base(std::move(other)) {}
 
-    /// Construct buffer from a BufferView
-    SLBuffer(const BufferView &s) : Base(s.begin(), s.end()) {}
+    /// Construct buffer from a span
+    SLBuffer(const std::span<const uint8_t> &s) : Base(s.begin(), s.end()) {}
 
     /// Construct buffer from an array
     template <size_t N>
@@ -79,8 +79,8 @@ namespace qtils {
       return *this;
     }
 
-    /// Append raw bytes from BufferView
-    SLBuffer &operator+=(const BufferView &view) {
+    /// Append raw bytes from a span
+    SLBuffer &operator+=(const std::span<const uint8_t> &view) {
       return put(view);
     }
 
@@ -118,8 +118,8 @@ namespace qtils {
       return *this;
     }
 
-    /// Append raw bytes from BufferView
-    SLBuffer &put(const qtils::BufferView &view) {
+    /// Append raw bytes from a span
+    SLBuffer &put(std::span<const uint8_t> view) {
       Base::insert(Base::end(), view.begin(), view.end());
       return *this;
     }
@@ -150,13 +150,13 @@ namespace qtils {
     }
 
     /// Get a view of this buffer
-    [[nodiscard]] BufferView view(size_t offset = 0, size_t length = -1) const {
+    [[nodiscard]] ByteView view(size_t offset = 0, size_t length = -1) const {
       return std::span(*this).subspan(offset, length);
     }
 
     /// Compile-time view with fixed offset and length
     template <size_t Offset, size_t Length>
-    [[nodiscard]] BufferView view() const {
+    [[nodiscard]] ByteView view() const {
       return std::span(*this).template subspan<Offset, Length>();
     }
 
@@ -167,8 +167,7 @@ namespace qtils {
 
     /// Construct buffer from hex string
     static outcome::result<SLBuffer> fromHex(std::string_view hex) {
-      OUTCOME_TRY(bytes, unhex(hex));
-      return outcome::success(SLBuffer(std::move(bytes)));
+      return unhex<SLBuffer>(hex);
     }
 
     /// Convert buffer to raw string (copy)
@@ -198,18 +197,10 @@ namespace qtils {
   }
 
   /// Type alias for unbounded SLBuffer
-  using Buffer = SLBuffer<std::numeric_limits<size_t>::max()>;
+  using ByteVec = SLBuffer<std::numeric_limits<size_t>::max()>;
 
   /// Empty buffer constant
-  inline static const Buffer kEmptyBuffer{};
-
-  namespace literals {
-    /// Literal operator to create buffer from raw string characters
-    inline Buffer operator""_buf(const char *c, size_t s) {
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-      return {std::vector<uint8_t>(c, c + s)};
-    }
-  }  // namespace literals
+  inline static const ByteVec kEmptyBuffer{};
 }  // namespace qtils
 
 /// std::hash specialization for SLBuffer
@@ -220,6 +211,6 @@ struct std::hash<qtils::SLBuffer<N>> {
   }
 };
 
-/// fmt::formatter specialization for Buffer
+/// fmt::formatter specialization for ByteVec
 template <>
-struct fmt::formatter<qtils::Buffer> : fmt::formatter<qtils::BufferView> {};
+struct fmt::formatter<qtils::ByteVec> : fmt::formatter<qtils::Hex> {};

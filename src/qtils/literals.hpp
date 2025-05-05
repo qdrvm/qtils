@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <qtils/byte_arr.hpp>
+#include <qtils/byte_vec.hpp>
 #include <qtils/hex.hpp>
 #include <qtils/unhex.hpp>
 #include <string_view>
@@ -41,9 +43,9 @@ namespace qtils::literals {
    */
   inline std::vector<uint8_t> operator""_unhex(const char *c, size_t s) {
     if (s > 2 and c[0] == '0' and c[1] == 'x') {
-      return unhex0x(std::string_view(c, s)).value();
+      return unhex0x<std::vector<uint8_t>>(std::string_view(c, s)).value();
     }
-    return unhex(std::string_view(c, s)).value();
+    return unhex<std::vector<uint8_t>>(std::string_view(c, s)).value();
   }
 
   /**
@@ -59,6 +61,12 @@ namespace qtils::literals {
    */
   inline std::string operator""_hex(const char *c, size_t s) {
     return to_hex(Hex{std::span{reinterpret_cast<const uint8_t *>(c), s}});
+  }
+
+  /// Literal operator to create buffer from raw string characters
+  inline ByteVec operator""_vec(const char *c, size_t s) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+    return {std::vector<uint8_t>(c, c + s)};
   }
 
 }  // namespace qtils::literals

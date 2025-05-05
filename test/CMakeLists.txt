@@ -32,10 +32,10 @@ function(addtest_part test_name)
     )
 endfunction()
 
-addtest(buffer_test
-    buffer_test.cpp
+addtest(byte_vec_test
+    byte_vec_test.cpp
     )
-target_link_libraries(buffer_test
+target_link_libraries(byte_vec_test
     fmt::fmt
     )
 
@@ -43,8 +43,8 @@ addtest(buffer_view_test
     buffer_view_test.cpp
     )
 
-addtest(blob_test
-    blob_test.cpp
+addtest(byte_arr_test
+    byte_arr_test.cpp
     )
 
 addtest(size_limited_containers_test

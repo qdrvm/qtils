@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <qtils/buffer.hpp>
+#include <qtils/byte_vec.hpp>
 
 #include <gtest/gtest.h>
 
-using qtils::Buffer;
+using qtils::ByteVec;
 using namespace std::string_literals;
 
 /// Case-insensitive string comparison helper
@@ -30,7 +30,7 @@ bool iequals(std::string_view a, std::string_view b) {
  * @then resulting buffer size and content match expectations
  */
 TEST(BufferTest, Put) {
-  Buffer b;
+  ByteVec b;
   ASSERT_EQ(b.size(), 0);
 
   auto hex = b.toHex();
@@ -71,11 +71,11 @@ TEST(BufferTest, Put) {
  * @then the first buffer contains the concatenated result
  */
 TEST(BufferTest, PutBuffer) {
-  Buffer current_buffer = {1, 2, 3};
-  Buffer another_buffer = {4, 5, 6};
+  ByteVec current_buffer = {1, 2, 3};
+  ByteVec another_buffer = {4, 5, 6};
   auto &buffer = current_buffer.put(another_buffer);
   ASSERT_EQ(&buffer, &current_buffer);
-  Buffer result = {1, 2, 3, 4, 5, 6};
+  ByteVec result = {1, 2, 3, 4, 5, 6};
   ASSERT_EQ(buffer, result);
 }
 
@@ -88,15 +88,15 @@ TEST(BufferTest, PutBuffer) {
 TEST(BufferTest, Init) {
   std::array<uint8_t, 5> data = {1, 2, 3, 4, 5};
 
-  Buffer b{1, 2, 3, 4, 5};
+  ByteVec b{1, 2, 3, 4, 5};
   ASSERT_EQ(b.size(), 5);
   ASSERT_TRUE(iequals(b.toHex(), "0102030405"s));
 
-  Buffer a(b);
+  ByteVec a(b);
   ASSERT_EQ(a, b);
   ASSERT_EQ(a.size(), b.size());
 
-  Buffer c(data);
+  ByteVec c(data);
   ASSERT_EQ(a, c);
   ASSERT_EQ(a.size(), c.size());
 }

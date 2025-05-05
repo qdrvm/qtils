@@ -8,7 +8,7 @@
 
 #include <fmt/ranges.h>
 
-#include <qtils/bytes.hpp>
+#include <qtils/span_adl.hpp>
 
 namespace qtils {
 
@@ -17,7 +17,7 @@ namespace qtils {
    * @brief Wrapper for hex encoding of byte sequences.
    */
   struct Hex {
-    BytesIn v;  ///< Underlying byte sequence to be hex-encoded
+    SpanAdl<const uint8_t> v;  ///< Underlying byte sequence to be hex-encoded
   };
 
   /**
@@ -29,10 +29,10 @@ namespace qtils {
     static constexpr char hex_chars[] = "0123456789ABCDEF";
 
     std::string result;
-    result.resize(data.v.size() * 2);
+    result.resize(data.v.v.size() * 2);
 
     auto it = result.begin();
-    for (uint8_t byte : data.v) {
+    for (uint8_t byte : data.v.v) {
       *it++ = hex_chars[byte >> 4];
       *it++ = hex_chars[byte & 0x0F];
     }
@@ -44,7 +44,7 @@ namespace qtils {
 
 /// Formatter for BytesIn with support for 0x/0X prefix and short/long modes
 template <>
-struct fmt::formatter<qtils::BytesIn> {
+struct fmt::formatter<qtils::Hex> {
   bool prefix = true;  ///< Show prefix (0x or 0X)
   bool full = false;   ///< Show full content or abbreviated form
   bool lower = true;   ///< Use lowercase hex digits
@@ -79,35 +79,19 @@ struct fmt::formatter<qtils::BytesIn> {
   }
 
   /// Format BytesIn as hex string
-  auto format(const qtils::BytesIn &bytes, format_context &ctx) const {
+  auto format(const qtils::Hex &bytes, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
       out = fmt::detail::write(out, "0x");
     }
     constexpr size_t kHead = 2, kTail = 2, kSmall = 1;
-    if (full or bytes.size() <= kHead + kTail + kSmall) {
-      return lower ? fmt::format_to(out, "{:02x}", fmt::join(bytes, ""))
-                   : fmt::format_to(out, "{:02X}", fmt::join(bytes, ""));
+    if (full or bytes.v.v.size() <= kHead + kTail + kSmall) {
+      return lower ? fmt::format_to(out, "{:02x}", fmt::join(bytes.v.v, ""))
+                   : fmt::format_to(out, "{:02X}", fmt::join(bytes.v.v, ""));
     }
     return fmt::format_to(out,
         "{:02x}…{:02x}",
-        fmt::join(bytes.first(kHead), ""),
-        fmt::join(bytes.last(kTail), ""));
-  }
-};
-
-/// Formatter for Bytes (inherits BytesIn formatter)
-template <>
-struct fmt::formatter<qtils::Bytes> : fmt::formatter<qtils::BytesIn> {};
-
-/// Formatter for BytesOut (inherits BytesIn formatter)
-template <>
-struct fmt::formatter<qtils::BytesOut> : fmt::formatter<qtils::BytesIn> {};
-
-/// Formatter for Hex (delegates to BytesIn formatter)
-template <>
-struct fmt::formatter<qtils::Hex> : fmt::formatter<qtils::BytesIn> {
-  auto format(const qtils::Hex &v, format_context &ctx) const {
-    return formatter<qtils::BytesIn>::format(v.v, ctx);
+        fmt::join(bytes.v.v.first(kHead), ""),
+        fmt::join(bytes.v.v.last(kTail), ""));
   }
 };

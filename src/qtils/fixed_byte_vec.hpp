@@ -17,22 +17,22 @@ namespace qtils {
    * @tparam N - maximum capacity
    */
   template <size_t N>
-  struct FixedByteVector {
-    ByteArray<N> data;
+  struct FixedByteVec {
+    ByteArr<N> data;
     size_t size;
 
-    FixedByteVector() = default;
+    FixedByteVec() = default;
 
-    FixedByteVector(ByteSpan span) : size{span.size()} {
-      QTILS_ASSERT_LESS_EQ(span.size(), N);
-      std::copy_n(span.begin(), N, data.begin());
+    FixedByteVec(ByteView view) : size{view.size()} {
+      QTILS_ASSERT_LESS_EQ(view.size(), N);
+      std::copy_n(view.begin(), N, data.begin());
     }
 
-    ByteSpan span() const & {
-      return ByteSpan{data.data(), size};
+    ByteView view() const & {
+      return ByteView{data.data(), size};
     }
 
-    ByteSpan span() const && = delete;
+    ByteView view() const && = delete;
   };
 
 }  // namespace qtils

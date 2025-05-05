@@ -11,10 +11,10 @@
 
 namespace qtils {
   template <size_t N>
-  Blob<N> array_from_span(ByteSpan span) {
-    QTILS_ASSERT_GREATER_EQ(span.size(), N);
-    Blob<N> array;
-    std::ranges::copy_n(span.begin(), N, array.begin());
+  ByteArr<N> array_from_span(ByteView view) {
+    QTILS_ASSERT_GREATER_EQ(view.size(), N);
+    ByteArr<N> array;
+    std::ranges::copy_n(view.begin(), N, array.begin());
     return array;
   }
 
@@ -23,10 +23,10 @@ namespace qtils {
    * if array size is greater than span size
    */
   template <size_t N>
-  Blob<N> array_from_span_fill(ByteSpan span, uint8_t filler = 0) {
-    Blob<N> array;
-    const auto s = std::min(N, span.size());
-    std::ranges::copy_n(span.begin(), s, array.begin());
+  ByteArr<N> array_from_span_fill(ByteView view, uint8_t filler = 0) {
+    ByteArr<N> array;
+    const auto s = std::min(N, view.size());
+    std::ranges::copy_n(view.begin(), s, array.begin());
     std::ranges::fill(
         std::ranges::subrange(array.begin() + s, array.end()), filler);
     return array;

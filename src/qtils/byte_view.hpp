@@ -13,7 +13,6 @@
 
 #include <qtils/endianness_macros.hpp>
 #include <qtils/hex.hpp>
-#include <qtils/literals.hpp>
 
 namespace qtils {
 
@@ -21,33 +20,33 @@ namespace qtils {
   class SLBuffer;
 
   /**
-   * @class BufferView
+   * @class ByteView
    * @brief A lightweight read-only view over a sequence of bytes.
    *
    * Provides convenience methods for accessing and manipulating
    * spans of immutable bytes, with support for conversion to hex,
    * comparison and reinterpretation as strings.
    */
-  class BufferView : public std::span<const uint8_t> {
+  class ByteView : public std::span<const uint8_t> {
    public:
     using span::span;
 
     /// Deleted constructor for initializer list rvalue
-    BufferView(std::initializer_list<uint8_t> &&) = delete;
+    ByteView(std::initializer_list<uint8_t> &&) = delete;
 
     /// Implicit conversion from span
-    BufferView(const span &other) : span(other) {}
+    ByteView(const span &other) : span(other) {}
 
-    /// Conversion constructor from span of integral bytes
+    /// Conversion constructor from a span of integral bytes
     template <typename T>
       requires std::is_integral_v<std::decay_t<T>> and (sizeof(T) == 1)
-    BufferView(std::span<T> other)
+    ByteView(std::span<T> other)
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         : span(reinterpret_cast<const uint8_t *>(other.data()), other.size()) {}
 
     /// Assignment from any span-like value
     template <typename T>
-    BufferView &operator=(T &&value) {
+    ByteView &operator=(T &&value) {
       span::operator=(std::forward<T>(value));
       return *this;
     }
@@ -86,19 +85,19 @@ namespace qtils {
     }
 
     /// 3-way comparison operator
-    auto operator<=>(const BufferView &other) const {
+    auto operator<=>(const ByteView &other) const {
       return qtils::cxx20::lexicographical_compare_three_way(
           span::begin(), span::end(), other.begin(), other.end());
     }
 
     /// Equality comparison operator
-    auto operator==(const BufferView &other) const {
+    auto operator==(const ByteView &other) const {
       return (*this <=> other) == std::strong_ordering::equal;
     }
   };
 
   /// Output hex representation to ostream
-  inline std::ostream &operator<<(std::ostream &os, BufferView view) {
+  inline std::ostream &operator<<(std::ostream &os, ByteView view) {
     static constexpr char hex_chars[] = "0123456789ABCDEF";
     for (uint8_t byte : view) {
       os.put(hex_chars[byte >> 4]);
@@ -126,9 +125,9 @@ namespace qtils {
 
 }  // namespace qtils
 
-/// Formatter for qtils::BufferView
+/// Formatter for qtils::ByteView
 template <>
-struct fmt::formatter<qtils::BufferView> {
+struct fmt::formatter<qtils::ByteView> {
   // Presentation format: 's' - short, 'l' - long.
   char presentation = 's';
 
@@ -150,10 +149,10 @@ struct fmt::formatter<qtils::BufferView> {
     return it;
   }
 
-  // Formats the Blob using the parsed format specification (presentation)
+  // Formats the ByteArr using the parsed format specification (presentation)
   // stored in this formatter.
   template <typename FormatContext>
-  auto format(const qtils::BufferView &view, FormatContext &ctx) const
+  auto format(const qtils::ByteView &view, FormatContext &ctx) const
       -> decltype(ctx.out()) {
     // ctx.out() is an output iterator to write to.
 

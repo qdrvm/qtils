@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <qtils/buffer_view.hpp>
+#include <qtils/byte_view.hpp>
 
 #include <gtest/gtest.h>
 
 #include <qtils/test/outcome.hpp>
 
-using qtils::BufferView;
+using qtils::ByteView;
 using Span = std::span<uint8_t>;
 
 /**
@@ -20,7 +20,7 @@ using Span = std::span<uint8_t>;
  * @then the view is empty and has size 0
  */
 TEST(BufferView, Constructor_default) {
-  BufferView v;
+  ByteView v;
 
   EXPECT_EQ(v.toHex(), "");
   EXPECT_EQ(v.size(), 0);
@@ -36,7 +36,7 @@ TEST(BufferView, Constructor_from_span) {
   uint8_t c_arr[] = {1, 2, 3, '1', '2', '3'};
   Span span(std::begin(c_arr), std::end(c_arr));
 
-  BufferView view_span(span);
+  ByteView view_span(span);
 
   EXPECT_EQ(view_span.toHex(), "010203313233");
   EXPECT_EQ(view_span.size(), std::size(c_arr));
@@ -51,7 +51,7 @@ TEST(BufferView, Constructor_from_span) {
 TEST(BufferView, Constructor_from_vector) {
   std::vector<uint8_t> vec = {1, 2, 3, '1', '2', '3'};
 
-  BufferView view_vec(vec);
+  ByteView view_vec(vec);
 
   EXPECT_EQ(view_vec.toHex(), "010203313233");
   EXPECT_EQ(view_vec.size(), vec.size());
@@ -66,7 +66,7 @@ TEST(BufferView, Constructor_from_vector) {
 TEST(BufferView, Constructor_from_array) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
 
-  BufferView view_arr(arr);
+  ByteView view_arr(arr);
 
   EXPECT_EQ(view_arr.toHex(), "010203313233");
   EXPECT_EQ(view_arr.size(), arr.size());
@@ -80,9 +80,9 @@ TEST(BufferView, Constructor_from_array) {
  */
 TEST(BufferView, Constructor_from_BufferView) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
-  BufferView view_arr(arr);
+  ByteView view_arr(arr);
 
-  BufferView view_view(view_arr);
+  ByteView view_view(view_arr);
 
   EXPECT_EQ(view_view.toHex(), "010203313233");
   EXPECT_EQ(view_view.size(), arr.size());

@@ -8,7 +8,6 @@
 
 #include <boost/algorithm/hex.hpp>
 
-#include <qtils/bytes.hpp>
 #include <qtils/enum_error_code.hpp>
 #include <qtils/outcome.hpp>
 
@@ -114,7 +113,7 @@ namespace qtils {
    * @param s hex string
    * @return Result with decoded container or error
    */
-  template <typename T = Bytes>
+  template <typename T>
   outcome::result<T> unhex(std::string_view s) {
     T t;
     OUTCOME_TRY(unhex(t, s));
@@ -146,7 +145,7 @@ namespace qtils {
    * @param s hex string
    * @return Result with decoded container or error
    */
-  template <typename T = Bytes>
+  template <typename T>
   outcome::result<T> unhex0x(std::string_view s) {
     T t;
     OUTCOME_TRY(unhex0x(t, s));
