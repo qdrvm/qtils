@@ -6,9 +6,10 @@
 
 #pragma once
 
+#include <fmt/compile.h>
 #include <fmt/ranges.h>
-
 #include <qtils/span_adl.hpp>
+#include <type_traits>
 
 namespace qtils {
 
@@ -49,49 +50,47 @@ struct fmt::formatter<qtils::Hex> {
   bool full = false;   ///< Show full content or abbreviated form
   bool lower = true;   ///< Use lowercase hex digits
 
-  /// Parse format flags (0x, 0X, x, X)
-  constexpr auto parse(format_parse_context &ctx) {
+  template <typename ParseContext>
+  constexpr auto parse(ParseContext &ctx) {
+    constexpr bool is_compile =
+        std::is_same_v<ParseContext, fmt::detail::compile_parse_context<char>>;
+
     auto it = ctx.begin();
-    auto end = [&] { return it == ctx.end() or * it == '}'; };
-    if (end()) {
+    auto end = ctx.end();
+
+    if (it == end || *it == '}') {
       return it;
     }
-    prefix = *it == '0';
-    if (prefix) {
+
+    if (*it == '0') {
+      prefix = true;
       ++it;
     }
-    if (not end()) {
-      lower = *it == 'x';
-      if (lower or *it == 'X') {
-        ++it;
-        full = true;
-        if (end()) {
-          return it;
-        }
-      }
-    }
 
-#if FMT_VERSION >= 100000
-    fmt::report_error(R"("x"/"X" or "0x"/"0X" expected)");
-#else
-    fmt::throw_format_error(R"("x"/"X" or "0x"/"0X" expected)");
-#endif
+    if (it != end && (*it == 'x' || *it == 'X')) {
+      lower = (*it == 'x');
+      full = true;
+      ++it;
+    } else if constexpr (!is_compile) {
+      throw fmt::format_error("qtils::Hex: expected 'x' or 'X'");
+    }
+    return it;
   }
 
   /// Format BytesIn as hex string
-  auto format(const qtils::Hex &bytes, format_context &ctx) const {
+  auto format(const std::span<const uint8_t> &span, format_context &ctx) const {
     auto out = ctx.out();
     if (prefix) {
       out = fmt::detail::write(out, "0x");
     }
     constexpr size_t kHead = 2, kTail = 2, kSmall = 1;
-    if (full or bytes.v.v.size() <= kHead + kTail + kSmall) {
-      return lower ? fmt::format_to(out, "{:02x}", fmt::join(bytes.v.v, ""))
-                   : fmt::format_to(out, "{:02X}", fmt::join(bytes.v.v, ""));
+    if (full or span.size() <= kHead + kTail + kSmall) {
+      return lower ? fmt::format_to(out, "{:02x}", fmt::join(span, ""))
+                   : fmt::format_to(out, "{:02X}", fmt::join(span, ""));
     }
     return fmt::format_to(out,
         "{:02x}…{:02x}",
-        fmt::join(bytes.v.v.first(kHead), ""),
-        fmt::join(bytes.v.v.last(kTail), ""));
+        fmt::join(span.first(kHead), ""),
+        fmt::join(span.last(kTail), ""));
   }
 };

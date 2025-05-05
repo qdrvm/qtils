@@ -44,13 +44,7 @@ namespace qtils {
 
 /// fmt::formatter specialization for ByteVec
 template <>
-struct fmt::formatter<qtils::BytesIn> : fmt::formatter<qtils::Hex> {
-  template <typename Ctx>
-  auto format(const qtils::BytesIn &bin, Ctx &ctx) const {
-    // используем существующий Hex-formatter
-    return formatter<qtils::Hex>{}.format(qtils::Hex{bin}, ctx);
-  }
-};
+struct fmt::formatter<qtils::BytesIn> : fmt::formatter<qtils::Hex> {};
 
 /// fmt::formatter specialization for ByteVec
 template <>
