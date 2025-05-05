@@ -41,3 +41,11 @@ namespace qtils {
   template <typename T>
   concept AsBytes = requires(const T &t) { BytesIn{t}; };
 }  // namespace qtils
+
+/// fmt::formatter specialization for ByteVec
+template <>
+struct fmt::formatter<qtils::BytesIn> : fmt::formatter<qtils::Hex> {};
+
+/// fmt::formatter specialization for ByteVec
+template <>
+struct fmt::formatter<qtils::BytesOut> : fmt::formatter<qtils::Hex> {};
