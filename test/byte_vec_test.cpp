@@ -29,7 +29,7 @@ bool iequals(std::string_view a, std::string_view b) {
  * buffer
  * @then resulting buffer size and content match expectations
  */
-TEST(BufferTest, Put) {
+TEST(ByteVecTest, Put) {
   ByteVec b;
   ASSERT_EQ(b.size(), 0);
 
@@ -65,12 +65,12 @@ TEST(BufferTest, Put) {
 }
 
 /**
- * @test Buffer appending.
+ * @test ByteVec appending.
  * @given a buffer with initial content and another buffer
  * @when appending the second buffer using put
  * @then the first buffer contains the concatenated result
  */
-TEST(BufferTest, PutBuffer) {
+TEST(ByteVecTest, PutByteVec) {
   ByteVec current_buffer = {1, 2, 3};
   ByteVec another_buffer = {4, 5, 6};
   auto &buffer = current_buffer.put(another_buffer);
@@ -80,12 +80,12 @@ TEST(BufferTest, PutBuffer) {
 }
 
 /**
- * @test Buffer initialization.
+ * @test ByteVec initialization.
  * @given various buffer initialization methods
  * @when constructing buffers via initializer list, copy, and array
  * @then the created buffers are equivalent and contain the same data
  */
-TEST(BufferTest, Init) {
+TEST(ByteVecTest, Init) {
   std::array<uint8_t, 5> data = {1, 2, 3, 4, 5};
 
   ByteVec b{1, 2, 3, 4, 5};

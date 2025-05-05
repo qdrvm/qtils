@@ -36,4 +36,4 @@
 #include <qtils/test/outcome.hpp>
 #include <qtils/unhex.hpp>
 #include <qtils/unused.hpp>
-int main() {}
+int main(){}

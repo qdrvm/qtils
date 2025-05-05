@@ -14,12 +14,12 @@ using qtils::ByteView;
 using Span = std::span<uint8_t>;
 
 /**
- * @test Default-constructed BufferView.
- * @given default-constructed BufferView
+ * @test Default-constructed ByteView.
+ * @given default-constructed ByteView
  * @when checking its size and content
  * @then the view is empty and has size 0
  */
-TEST(BufferView, Constructor_default) {
+TEST(ByteView, Constructor_default) {
   ByteView v;
 
   EXPECT_EQ(v.toHex(), "");
@@ -27,12 +27,12 @@ TEST(BufferView, Constructor_default) {
 }
 
 /**
- * @test BufferView constructed from span.
+ * @test ByteView constructed from span.
  * @given a span of bytes
- * @when constructing a BufferView from it
- * @then the BufferView reflects the content and size of the span
+ * @when constructing a ByteView from it
+ * @then the ByteView reflects the content and size of the span
  */
-TEST(BufferView, Constructor_from_span) {
+TEST(ByteView, Constructor_from_span) {
   uint8_t c_arr[] = {1, 2, 3, '1', '2', '3'};
   Span span(std::begin(c_arr), std::end(c_arr));
 
@@ -43,12 +43,12 @@ TEST(BufferView, Constructor_from_span) {
 }
 
 /**
- * @test BufferView constructed from vector.
+ * @test ByteView constructed from vector.
  * @given a vector of bytes
- * @when constructing a BufferView from it
- * @then the BufferView reflects the content and size of the vector
+ * @when constructing a ByteView from it
+ * @then the ByteView reflects the content and size of the vector
  */
-TEST(BufferView, Constructor_from_vector) {
+TEST(ByteView, Constructor_from_vector) {
   std::vector<uint8_t> vec = {1, 2, 3, '1', '2', '3'};
 
   ByteView view_vec(vec);
@@ -58,12 +58,12 @@ TEST(BufferView, Constructor_from_vector) {
 }
 
 /**
- * @test BufferView constructed from array.
+ * @test ByteView constructed from array.
  * @given a std::array of bytes
- * @when constructing a BufferView from it
- * @then the BufferView reflects the content and size of the array
+ * @when constructing a ByteView from it
+ * @then the ByteView reflects the content and size of the array
  */
-TEST(BufferView, Constructor_from_array) {
+TEST(ByteView, Constructor_from_array) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
 
   ByteView view_arr(arr);
@@ -73,12 +73,12 @@ TEST(BufferView, Constructor_from_array) {
 }
 
 /**
- * @test BufferView constructed from another BufferView.
- * @given an existing BufferView
- * @when constructing another BufferView from it
- * @then the new BufferView has the same content and size
+ * @test ByteView constructed from another ByteView.
+ * @given an existing ByteView
+ * @when constructing another ByteView from it
+ * @then the new ByteView has the same content and size
  */
-TEST(BufferView, Constructor_from_BufferView) {
+TEST(ByteView, Constructor_from_ByteView) {
   std::array<uint8_t, 6> arr = {1, 2, 3, '1', '2', '3'};
   ByteView view_arr(arr);
 

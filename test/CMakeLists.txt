@@ -39,8 +39,8 @@ target_link_libraries(byte_vec_test
     fmt::fmt
     )
 
-addtest(buffer_view_test
-    buffer_view_test.cpp
+addtest(byte_vec_or_view
+    byte_vec_or_view.cpp
     )
 
 addtest(byte_arr_test

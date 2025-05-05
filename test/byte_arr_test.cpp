@@ -22,10 +22,10 @@ bool iequals(std::string_view a, std::string_view b) {
 }
 
 /**
- * @test Blob creation from valid hex-encoded string.
+ * @test ByteArr creation from valid hex-encoded string.
  * @given valid hex-encoded string
- * @when creating a Blob from it
- * @then the Blob is successfully created and contains the correct data
+ * @when creating a ByteArr from it
+ * @then the ByteArr is successfully created and contains the correct data
  */
 TEST(ByteArrTest, CreateFromValidHex) {
   std::string hex32 = "00ff";
@@ -39,9 +39,9 @@ TEST(ByteArrTest, CreateFromValidHex) {
 }
 
 /**
- * @test Blob creation fails on non-hex string.
+ * @test ByteArr creation fails on non-hex string.
  * @given string that is not hex-encoded
- * @when creating a Blob from it
+ * @when creating a ByteArr from it
  * @then an error is returned
  */
 TEST(ByteArrTest, CreateFromNonHex) {
@@ -53,9 +53,9 @@ TEST(ByteArrTest, CreateFromNonHex) {
 }
 
 /**
- * @test Blob creation fails on odd-length hex string.
+ * @test ByteArr creation fails on odd-length hex string.
  * @given hex-encoded string of odd length
- * @when creating a Blob from it
+ * @when creating a ByteArr from it
  * @then an error is returned
  */
 TEST(ByteArrTest, CreateFromOddLengthHex) {
@@ -67,9 +67,9 @@ TEST(ByteArrTest, CreateFromOddLengthHex) {
 }
 
 /**
- * @test Blob creation fails on incorrect hex length.
+ * @test ByteArr creation fails on incorrect hex length.
  * @given hex-encoded string of incorrect length
- * @when creating a Blob with a fixed size from it
+ * @when creating a ByteArr with a fixed size from it
  * @then an error is returned
  */
 TEST(ByteArrTest, CreateFromWrongLendthHex) {
@@ -81,10 +81,10 @@ TEST(ByteArrTest, CreateFromWrongLendthHex) {
 }
 
 /**
- * @test Blob creation from valid string.
+ * @test ByteArr creation from valid string.
  * @given string of valid length
- * @when creating a Blob from it using fromString
- * @then the Blob is successfully created and contains the expected data
+ * @when creating a ByteArr from it using fromString
+ * @then the ByteArr is successfully created and contains the expected data
  */
 TEST(ByteArrTest, CreateFromValidString) {
   std::array<byte_t, 5> expected{'a', 's', 'd', 'f', 'g'};
@@ -98,9 +98,9 @@ TEST(ByteArrTest, CreateFromValidString) {
 }
 
 /**
- * @test Blob creation fails on string of incorrect length.
+ * @test ByteArr creation fails on string of incorrect length.
  * @given string of incorrect length
- * @when creating a Blob from it using fromString
+ * @when creating a ByteArr from it using fromString
  * @then an error is returned
  */
 TEST(ByteArrTest, CreateFromInvalidString) {
@@ -112,9 +112,9 @@ TEST(ByteArrTest, CreateFromInvalidString) {
 }
 
 /**
- * @test Conversion of Blob content to hex string.
+ * @test Conversion of ByteArr content to hex string.
  * @given string content
- * @when creating a Blob and converting it to hex
+ * @when creating a ByteArr and converting it to hex
  * @then the result matches the expected hex representation
  */
 TEST(ByteArrTest, ToHexTest) {
@@ -129,9 +129,9 @@ TEST(ByteArrTest, ToHexTest) {
 }
 
 /**
- * @test Conversion of Blob content to string.
+ * @test Conversion of ByteArr content to string.
  * @given binary content
- * @when creating a Blob and calling toString
+ * @when creating a ByteArr and calling toString
  * @then the result matches the original string
  */
 TEST(ByteArrTest, ToStringTest) {

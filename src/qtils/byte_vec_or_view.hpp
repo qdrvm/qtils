@@ -105,15 +105,29 @@ namespace qtils {
     }
 
     /// Extract buffer (copy if view, clear internal state)
-    ByteVec intoBuffer() & {
+    ByteVec intoByteVec() & {
       auto buffer = std::move(mut());
       variant = Moved{};
       return buffer;
     }
 
     /// Extract buffer (move overload)
-    ByteVec intoBuffer() && {
+    ByteVec intoByteVec() && {
       return std::move(mut());
+    }
+
+    /// Extract buffer (copy if view, clear internal state)
+    [[deprecated("Use ByteVec::intoBuffer() instead")]]  //
+    ByteVec
+    intoBuffer() & {
+      return intoByteVec();
+    }
+
+    /// Extract buffer (move overload)
+    [[deprecated("Use ByteVec::intoBuffer() instead")]]  //
+    ByteVec
+    intoBuffer() && {
+      return intoByteVec();
     }
 
    private:

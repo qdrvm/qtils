@@ -193,7 +193,7 @@ namespace qtils {
   template <size_t MaxSize>
   inline std::ostream &operator<<(
       std::ostream &os, const SLBuffer<MaxSize> &buffer) {
-    return os << BufferView(buffer);
+    return os << ByteView(buffer);
   }
 
   /// Type alias for unbounded SLBuffer

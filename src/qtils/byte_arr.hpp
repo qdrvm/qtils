@@ -19,7 +19,7 @@
 
 /**
  * @def JAM_BLOB_STRICT_TYPEDEF
- * @brief Declares a strict typedef of qtils::Blob<N> with additional helpers.
+ * @brief Declares a strict typedef of qtils::ByteArr<N> with additional helpers.
  *
  * This macro defines a strongly typed wrapper over a fixed-size binary blob
  * using a derived class. It includes:
@@ -102,10 +102,10 @@
 namespace qtils {
 
   /**
-   * @enum BlobError
-   * @brief Error codes for Blob creation/initialization
+   * @enum ByteArrError
+   * @brief Error codes for ByteArr creation/initialization
    */
-  enum class BlobError : uint8_t {
+  enum class ByteArrError : uint8_t {
     INCORRECT_LENGTH = 1  ///< Input size does not match the required blob size
   };
 
@@ -164,11 +164,11 @@ namespace qtils {
     /**
      * Construct blob from string content
      * @param data string with exactly `size_` bytes
-     * @return Blob if successful or error if size mismatches
+     * @return ByteArr if successful or error if size mismatches
      */
     static outcome::result<ByteArr> fromString(std::string_view data) {
       if (data.size() != size_) {
-        return BlobError::INCORRECT_LENGTH;
+        return ByteArrError::INCORRECT_LENGTH;
       }
       ByteArr result;
       std::ranges::copy(data, result.begin());
@@ -178,7 +178,7 @@ namespace qtils {
     /**
      * Construct blob from hex-encoded string
      * @param hex string with 2*size_ characters
-     * @return Blob if hex is valid and of correct length
+     * @return ByteArr if hex is valid and of correct length
      */
     static outcome::result<ByteArr> fromHex(std::string_view hex) {
       OUTCOME_TRY(res, unhex<ByteArr>(hex));
@@ -188,7 +188,7 @@ namespace qtils {
     /**
      * Construct blob from hex string prefixed with 0x
      * @param hex string prefixed with "0x"
-     * @return Blob if hex is valid and of correct length
+     * @return ByteArr if hex is valid and of correct length
      */
     static outcome::result<ByteArr> fromHexWithPrefix(std::string_view hex) {
       OUTCOME_TRY(res, unhex0x<ByteArr>(hex));
@@ -197,12 +197,12 @@ namespace qtils {
 
     /**
      * Construct blob from binary span
-     * @param span binary view (BufferView)
-     * @return Blob if span is of correct length
+     * @param span binary view
+     * @return ByteArr if span is of correct length
      */
     static outcome::result<ByteArr> fromSpan(std::span<const uint8_t> span) {
       if (span.size() != size_) {
-        return BlobError::INCORRECT_LENGTH;
+        return ByteArrError::INCORRECT_LENGTH;
       }
       ByteArr blob;
       std::ranges::copy(span, blob.begin());
@@ -221,7 +221,7 @@ namespace qtils {
   };
 
   /**
-   * @deprecated Use Blob<N> instead.
+   * @deprecated Use ByteArr<N> instead.
    */
   template <size_t N>
   using BytesN [[deprecated("Use ByteArr<N> instead")]] = ByteArr<N>;
@@ -287,14 +287,14 @@ struct fmt::formatter<qtils::ByteArr<N>> : fmt::formatter<qtils::Hex> {};
 //   }
 // };
 
-/// Declares outcome error code support for BlobError
-OUTCOME_HPP_DECLARE_ERROR(qtils, BlobError);
+/// Declares outcome error code support for ByteArrError
+OUTCOME_HPP_DECLARE_ERROR(qtils, ByteArrError);
 
-inline OUTCOME_CPP_DEFINE_CATEGORY(qtils, BlobError, e) {
-  using qtils::BlobError;
+inline OUTCOME_CPP_DEFINE_CATEGORY(qtils, ByteArrError, e) {
+  using qtils::ByteArrError;
 
   switch (e) {
-    case BlobError::INCORRECT_LENGTH:
+    case ByteArrError::INCORRECT_LENGTH:
       return "Input string has incorrect length, not matching the blob size";
   }
 
