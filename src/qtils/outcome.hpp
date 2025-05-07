@@ -35,8 +35,9 @@ namespace qtils {
 #define _OUTCOME_TRY_out(tmp, out, expr) \
   _BOOST_OUTCOME_TRY(tmp, auto &&out, expr)
 #define _OUTCOME_OVERLOAD(_1, _2, s, ...) _OUTCOME_TRY_##s
-#define OUTCOME_TRY(...) \
-  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(QTILS_OUTCOME_UNIQUE_NAME, __VA_ARGS__)
+#define OUTCOME_TRY(...)                     \
+  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)( \
+      QTILS_OUTCOME_UNIQUE_NAME, __VA_ARGS__)
 
 namespace outcome {
   template <class R>

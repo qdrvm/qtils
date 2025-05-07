@@ -16,4 +16,4 @@ namespace qtils {
     }
   };
 
-}  // namespace kagome
+}  // namespace qtils

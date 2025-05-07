@@ -30,9 +30,9 @@ namespace qtils {
     return outcome::success();
   }
 
-  inline outcome::result<qtils::Bytes> readBytes(
+  inline outcome::result<qtils::ByteVec> readBytes(
       const std::filesystem::path &path) {
-    qtils::Bytes out;
+    qtils::ByteVec out;
     OUTCOME_TRY(readFile(out, path));
     return out;
   }

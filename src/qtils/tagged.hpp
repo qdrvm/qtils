@@ -601,7 +601,7 @@ namespace qtils {
       if constexpr (IsWrapped) {
         return tagged.Base::value;
       } else {
-        return static_cast<const T &>(tagged);;
+        return static_cast<const T &>(tagged);
       }
     }
     /**

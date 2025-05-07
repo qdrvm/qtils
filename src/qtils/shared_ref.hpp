@@ -89,7 +89,12 @@ namespace qtils {
      * @param Dummies The ForceInject tags to select this constructor.
      */
     SharedRef(std::shared_ptr<T> sptr, ForceInject, ForceInject)
-        : SharedRef(std::move(sptr)) {}
+        : SharedRef(std::move(sptr)) {
+      if (!ptr_) {
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr (in private ctor)");
+      }
+    }
 
     /// @brief Copy constructor
     SharedRef(const SharedRef &) = default;
@@ -225,6 +230,7 @@ namespace qtils {
    * @deprecated Use SharedRef<T, Deleter> directly instead.
    */
   template <class T>
-  using StrictSharedPtr [[deprecated("Use SharedRef instead")]] = SharedRef<T>;
+  using StrictSharedPtr [[deprecated("Use qtils::SharedRef instead")]] =
+      SharedRef<T>;
 
 }  // namespace qtils

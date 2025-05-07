@@ -10,26 +10,29 @@
 #include <qtils/bytes.hpp>
 
 namespace qtils {
- 
+
   /**
    * Fixed-capacity vector meant to be allocated on stack
    * Used to avoid heap allocations for small vectors with known capacity
    * @tparam N - maximum capacity
    */
   template <size_t N>
-  struct FixedByteVector {
-    ByteArray<N> data;
+  struct FixedByteVec {
+    ByteArr<N> data;
     size_t size;
 
-    FixedByteVector() : data{}, size{} {}
+    FixedByteVec() = default;
 
-    FixedByteVector(ByteSpan span) : size{span.size()} {
-      QTILS_ASSERT_LESS_EQ(span.size(), N);
-      std::copy_n(span.begin(), N, data.begin());
+    FixedByteVec(ByteView view) : size{view.size()} {
+      QTILS_ASSERT_LESS_EQ(view.size(), N);
+      std::copy_n(view.begin(), N, data.begin());
     }
 
-    ByteSpan span() const {
-      return ByteSpan{data.data(), size};
+    ByteView view() const & {
+      return ByteView{data.data(), size};
     }
+
+    ByteView view() const && = delete;
   };
-}
+
+}  // namespace qtils
