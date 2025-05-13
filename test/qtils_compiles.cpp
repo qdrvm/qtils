@@ -36,4 +36,5 @@
 #include <qtils/test/outcome.hpp>
 #include <qtils/unhex.hpp>
 #include <qtils/unused.hpp>
+#include <qtils/visit_in_place.hpp>
 int main(){}

@@ -57,3 +57,7 @@ target_link_libraries(size_limited_containers_test
 addtest(shared_ref_test
     shared_ref_test.cpp
 )
+
+addtest(visit_in_place_test
+    visit_in_place_test.cpp
+)
