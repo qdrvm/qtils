@@ -22,6 +22,8 @@
 
 namespace qtils {
 
+  using byte_t = uint8_t;
+
   /**
    * @class SLBuffer
    * @brief Size-limited dynamic byte buffer with serialization helpers.
@@ -210,6 +212,10 @@ struct std::hash<qtils::SLBuffer<N>> {
     return boost::hash_range(x.begin(), x.end());
   }
 };
+
+template <typename Char>
+struct fmt::range_format_kind<qtils::ByteVec, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
 
 /// fmt::formatter specialization for ByteVec
 template <>

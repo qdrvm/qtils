@@ -9,6 +9,7 @@
 
 using qtils::byte_t;
 using qtils::ByteArr;
+using namespace std::string_literals;
 
 /// Case-insensitive string comparison helper
 bool iequals(std::string_view a, std::string_view b) {
@@ -142,4 +143,16 @@ TEST(ByteArrTest, ToStringTest) {
 
   ASSERT_TRUE(
       iequals(blob.toString(), std::string(expected.begin(), expected.end())));
+}
+
+/**
+ * @test ByteArr formatting with fmtlib.
+ * @given A ByteArr initialized with the bytes
+ * @when Formatted using fmt::format with some format specifiers
+ * @then The formatted strings match the expected representations
+ */
+TEST(ByteArrTest, Format) {
+  ByteArr<6> arr{0x01, 0x02, 0x03, 0x0a, 0x0b, 0x0c};
+
+  ASSERT_EQ(fmt::format("{:0x}", arr),  "0x0102…0b0c"s);
 }

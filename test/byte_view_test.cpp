@@ -10,8 +10,11 @@
 
 #include <qtils/test/outcome.hpp>
 
+#include "qtils/byte_vec.hpp"
+
 using qtils::ByteView;
 using Span = std::span<uint8_t>;
+using namespace std::string_literals;
 
 /**
  * @test Default-constructed ByteView.
@@ -86,4 +89,17 @@ TEST(ByteView, Constructor_from_ByteView) {
 
   EXPECT_EQ(view_view.toHex(), "010203313233");
   EXPECT_EQ(view_view.size(), arr.size());
+}
+
+/**
+ * @test ByteView formatting with fmtlib.
+ * @given A ByteView initialized with the bytes
+ * @when Formatted using fmt::format with some format specifiers
+ * @then The formatted strings match the expected representations
+ */
+TEST(ByteView, Format) {
+  uint8_t arr[] = {0x01, 0x02, 0x03, 0x0a, 0x0b, 0x0c};
+  ByteView view(arr);
+
+  ASSERT_EQ(fmt::format("{:0x}", view),  "0x0102…0b0c"s);
 }

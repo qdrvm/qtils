@@ -19,7 +19,8 @@
 
 /**
  * @def JAM_BLOB_STRICT_TYPEDEF
- * @brief Declares a strict typedef of qtils::ByteArr<N> with additional helpers.
+ * @brief Declares a strict typedef of qtils::ByteArr<N> with additional
+ * helpers.
  *
  * This macro defines a strongly typed wrapper over a fixed-size binary blob
  * using a derived class. It includes:
@@ -242,50 +243,13 @@ struct std::hash<qtils::ByteArr<N>> {
   }
 };
 
+template <size_t N, typename Char>
+struct fmt::range_format_kind<qtils::ByteArr<N>, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
+
 /// fmt::formatter specialization for ByteArr<N>
 template <size_t N>
 struct fmt::formatter<qtils::ByteArr<N>> : fmt::formatter<qtils::Hex> {};
-
-// {
-//   // Presentation format: 's' - short, 'l' - long.
-//   char presentation = N > 4 ? 's' : 'l';
-//
-//   // Parses format specifications of the form ['s' | 'l'].
-//   constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
-//     // Parse the presentation format and store it in the formatter:
-//     auto it = ctx.begin(), end = ctx.end();
-//     if (it != end && (*it == 's' || *it == 'l')) {
-//       presentation = *it++;
-//     }
-//
-//     // Check if reached the end of the range:
-//     if (it != end && *it != '}') {
-//       throw format_error("invalid format");
-//     }
-//
-//     // Return an iterator past the end of the parsed range:
-//     return it;
-//   }
-//
-//   // Formats the ByteArr using the parsed format specification (presentation)
-//   // stored in this formatter.
-//   template <typename FormatContext>
-//   auto format(const qtils::ByteArr<N> &blob, FormatContext &ctx) const
-//       -> decltype(ctx.out()) {
-//     if (presentation == 's') {
-//       if constexpr (N > 4) {
-//         uint16_t head = static_cast<uint16_t>(blob[1])
-//             | (static_cast<uint16_t>(blob[0]) << 8);
-//         uint16_t tail = static_cast<uint16_t>(blob[blob.size() - 1])
-//             | (static_cast<uint16_t>(blob[blob.size() - 2]) << 8);
-//         return fmt::format_to(ctx.out(), "0x{:04x}…{:04x}", head, tail);
-//       }
-//       // else fallback to normal print
-//     }
-//
-//     return fmt::format_to(ctx.out(), "0x{}", blob.toHex());
-//   }
-// };
 
 /// Declares outcome error code support for ByteArrError
 OUTCOME_HPP_DECLARE_ERROR(qtils, ByteArrError);
