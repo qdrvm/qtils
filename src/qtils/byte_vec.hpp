@@ -201,8 +201,8 @@ namespace qtils {
   /// Type alias for unbounded SLBuffer
   using ByteVec = SLBuffer<std::numeric_limits<size_t>::max()>;
 
-  /// Empty buffer constant
-  inline static const ByteVec kEmptyBuffer{};
+  /// Empty ByteVec constant
+  inline static const ByteVec EmptyVec{};
 }  // namespace qtils
 
 /// std::hash specialization for SLBuffer

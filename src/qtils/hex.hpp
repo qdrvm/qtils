@@ -17,7 +17,9 @@ namespace qtils {
    * @struct Hex
    * @brief Wrapper for hex encoding of byte sequences.
    */
-  struct Hex : std::span<const uint8_t> {};
+  struct Hex : std::span<const uint8_t> {
+    using std::span<const uint8_t>::span;
+  };
 
   /**
    * @brief Convert a byte container wrapped in Hex to hexadecimal string.
