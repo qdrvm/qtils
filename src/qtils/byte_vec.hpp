@@ -164,7 +164,7 @@ namespace qtils {
 
     /// Convert buffer to hex string
     [[nodiscard]] std::string toHex() const {
-      return to_hex(Hex{*this});
+      return fmt::format("{:xx}", Hex(*this));
     }
 
     /// Construct buffer from hex string

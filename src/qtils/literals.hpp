@@ -60,7 +60,7 @@ namespace qtils::literals {
    * @return hex-encoded string
    */
   inline std::string operator""_hex(const char *c, size_t s) {
-    return to_hex(Hex(reinterpret_cast<const uint8_t *>(c), s));
+    return fmt::format("{:xx}", Hex(reinterpret_cast<const uint8_t *>(c), s));
   }
 
   /**

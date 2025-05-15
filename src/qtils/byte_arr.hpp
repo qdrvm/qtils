@@ -159,7 +159,7 @@ namespace qtils {
 
     /// Convert blob content to hexadecimal string
     [[nodiscard]] std::string toHex() const {
-      return to_hex(Hex{*this});
+      return fmt::format("{:xx}", Hex(*this));
     }
 
     /**

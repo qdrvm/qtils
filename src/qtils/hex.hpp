@@ -21,26 +21,6 @@ namespace qtils {
     using std::span<const uint8_t>::span;
   };
 
-  /**
-   * @brief Convert a byte container wrapped in Hex to hexadecimal string.
-   * @param data Hex wrapper around BytesIn
-   * @return Uppercase hex-encoded string (2 chars per byte)
-   */
-  inline std::string to_hex(const Hex &data) {
-    static constexpr char hex_chars[] = "0123456789ABCDEF";
-
-    std::string result;
-    result.resize(data.size() * 2);
-
-    auto it = result.begin();
-    for (uint8_t byte : data) {
-      *it++ = hex_chars[byte >> 4];
-      *it++ = hex_chars[byte & 0x0F];
-    }
-
-    return result;
-  }
-
 }  // namespace qtils
 
 template <typename Char>

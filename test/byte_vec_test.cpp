@@ -35,7 +35,7 @@ TEST(ByteVecTest, Put) {
   ASSERT_EQ(b.size(), 0);
 
   auto hex = b.toHex();
-  ASSERT_EQ(hex, ""s);
+  ASSERT_EQ(hex, "<empty>"s);
 
   auto s = "hello"s;
   b.put(s);

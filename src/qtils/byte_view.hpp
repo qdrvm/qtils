@@ -75,7 +75,7 @@ namespace qtils {
 
     /// Convert view content to hexadecimal string
     [[nodiscard]] std::string toHex() const {
-      return to_hex(Hex{*this});
+      return fmt::format("{:xx}", Hex(*this));
     }
 
     /// Reinterpret content as string view

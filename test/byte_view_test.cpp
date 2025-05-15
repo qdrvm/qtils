@@ -25,7 +25,7 @@ using namespace std::string_literals;
 TEST(ByteView, Constructor_default) {
   ByteView v;
 
-  EXPECT_EQ(v.toHex(), "");
+  EXPECT_EQ(v.toHex(), "<empty>"s);
   EXPECT_EQ(v.size(), 0);
 }
 
