@@ -75,7 +75,7 @@ namespace qtils {
 
     /// Convert view content to hexadecimal string
     [[nodiscard]] std::string toHex() const {
-      return to_hex(Hex{*this});
+      return fmt::format("{:xx}", Hex(*this));
     }
 
     /// Reinterpret content as string view
@@ -125,66 +125,10 @@ namespace qtils {
 
 }  // namespace qtils
 
-/// Formatter for qtils::ByteView
+template <typename Char>
+struct fmt::range_format_kind<qtils::ByteView, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
+
+/// fmt::formatter specialization for ByteView
 template <>
-struct fmt::formatter<qtils::ByteView> {
-  // Presentation format: 's' - short, 'l' - long.
-  char presentation = 's';
-
-  // Parses format specifications of the form ['s' | 'l'].
-  constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {
-    // Parse the presentation format and store it in the formatter:
-    auto it = ctx.begin();
-    auto end = ctx.end();
-    if (it != end && (*it == 's' || *it == 'l')) {
-      presentation = *it++;
-    }
-
-    // Check if reached the end of the range:
-    if (it != end && *it != '}') {
-      throw format_error("invalid format");
-    }
-
-    // Return an iterator past the end of the parsed range:
-    return it;
-  }
-
-  // Formats the ByteArr using the parsed format specification (presentation)
-  // stored in this formatter.
-  template <typename FormatContext>
-  auto format(const qtils::ByteView &view, FormatContext &ctx) const
-      -> decltype(ctx.out()) {
-    // ctx.out() is an output iterator to write to.
-
-    if (view.empty()) {
-      static constexpr string_view message("<empty>");
-      return std::copy(message.begin(), message.end(), ctx.out());
-    }
-
-    if (presentation == 's' && view.size() > 5) {
-      return fmt::format_to(ctx.out(),
-          "0x{:04x}…{:04x}",
-          // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-          htobe16(*reinterpret_cast<const uint16_t *>(view.data())),
-          // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-          htobe16(*reinterpret_cast<const uint16_t *>(
-              view.data() + view.size() - sizeof(uint16_t))));
-    }
-
-    return fmt::format_to(ctx.out(), "0x{}", view.toHex());
-  }
-};
-
-/// Formatter for span of unsigned ints
-template <>
-struct fmt::formatter<std::span<const unsigned int>> {
-  constexpr auto parse(format_parse_context &ctx) {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const std::span<const unsigned int> &span, FormatContext &ctx) {
-    auto out = ctx.out();
-    return fmt::format_to(out, "[{}]", fmt::join(span, ", "));
-  }
-};
+struct fmt::formatter<qtils::ByteView> : fmt::formatter<qtils::Hex> {};

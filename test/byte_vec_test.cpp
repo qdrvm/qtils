@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+using qtils::byte_t;
 using qtils::ByteVec;
 using namespace std::string_literals;
 
@@ -34,7 +35,7 @@ TEST(ByteVecTest, Put) {
   ASSERT_EQ(b.size(), 0);
 
   auto hex = b.toHex();
-  ASSERT_EQ(hex, ""s);
+  ASSERT_EQ(hex, "<empty>"s);
 
   auto s = "hello"s;
   b.put(s);
@@ -99,4 +100,16 @@ TEST(ByteVecTest, Init) {
   ByteVec c(data);
   ASSERT_EQ(a, c);
   ASSERT_EQ(a.size(), c.size());
+}
+
+/**
+ * @test ByteVec formatting with fmtlib.
+ * @given A ByteVec initialized with the bytes
+ * @when Formatted using fmt::format with some format specifiers
+ * @then The formatted strings match the expected representations
+ */
+TEST(ByteVecTest, Format) {
+  ByteVec vec{0x01, 0x02, 0x03, 0x0a, 0x0b, 0x0c};
+
+  ASSERT_EQ(fmt::format("{:0x}", vec),  "0x0102…0b0c"s);
 }

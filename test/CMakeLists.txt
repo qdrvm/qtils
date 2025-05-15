@@ -32,6 +32,13 @@ function(addtest_part test_name)
     )
 endfunction()
 
+addtest(hex_test
+    hex_test.cpp
+    )
+target_link_libraries(hex_test
+    fmt::fmt
+    )
+
 addtest(byte_vec_test
     byte_vec_test.cpp
     )
@@ -39,12 +46,18 @@ target_link_libraries(byte_vec_test
     fmt::fmt
     )
 
-addtest(byte_vec_or_view
-    byte_vec_or_view.cpp
+addtest(byte_view_test
+    byte_view_test.cpp
     )
+target_link_libraries(byte_view_test
+    fmt::fmt
+)
 
 addtest(byte_arr_test
     byte_arr_test.cpp
+    )
+target_link_libraries(byte_arr_test
+    fmt::fmt
     )
 
 addtest(size_limited_containers_test
@@ -56,4 +69,8 @@ target_link_libraries(size_limited_containers_test
 
 addtest(shared_ref_test
     shared_ref_test.cpp
+)
+
+addtest(visit_in_place_test
+    visit_in_place_test.cpp
 )

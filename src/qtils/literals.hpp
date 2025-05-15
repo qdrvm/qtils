@@ -60,13 +60,28 @@ namespace qtils::literals {
    * @return hex-encoded string
    */
   inline std::string operator""_hex(const char *c, size_t s) {
-    return to_hex(Hex{std::span{reinterpret_cast<const uint8_t *>(c), s}});
+    return fmt::format("{:xx}", Hex(reinterpret_cast<const uint8_t *>(c), s));
   }
 
-  /// Literal operator to create buffer from raw string characters
+  /**
+   * @brief Creates a ByteVec from a raw string literal.
+   *
+   * @details This literal simply copies the raw characters (as bytes)
+   * into a ByteVec. It does **not** interpret the content as hexadecimal —
+   * for hex decoding, use the `"_unhex"` literal instead.
+   *
+   * @note The input is taken as-is, including non-ASCII or null bytes.
+   * @example
+   *   using namespace qtils::literals;
+   *   auto v = "abc"_vec; // v = {'a', 'b', 'c'}
+   *
+   * @param c Pointer to the character data
+   * @param s Length of the string literal
+   * @return ByteVec containing the raw characters
+   */
   inline ByteVec operator""_vec(const char *c, size_t s) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-    return {std::vector<uint8_t>(c, c + s)};
+    return {c, c + s};
   }
 
 }  // namespace qtils::literals

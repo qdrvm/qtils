@@ -17,48 +17,47 @@ namespace qtils {
    * @struct Hex
    * @brief Wrapper for hex encoding of byte sequences.
    */
-  struct Hex {
-    SpanAdl<const uint8_t> v;  ///< Underlying byte sequence to be hex-encoded
+  struct Hex : std::span<const uint8_t> {
+    using std::span<const uint8_t>::span;
   };
-
-  /**
-   * @brief Convert byte container wrapped in Hex to hexadecimal string.
-   * @param data Hex wrapper around BytesIn
-   * @return Uppercase hex-encoded string (2 chars per byte)
-   */
-  inline std::string to_hex(const Hex &data) {
-    static constexpr char hex_chars[] = "0123456789ABCDEF";
-
-    std::string result;
-    result.resize(data.v.v.size() * 2);
-
-    auto it = result.begin();
-    for (uint8_t byte : data.v.v) {
-      *it++ = hex_chars[byte >> 4];
-      *it++ = hex_chars[byte & 0x0F];
-    }
-
-    return result;
-  }
 
 }  // namespace qtils
 
-/// Formatter for BytesIn with support for 0x/0X prefix and short/long modes
+template <typename Char>
+struct fmt::range_format_kind<qtils::Hex, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
+
+/**
+ * Formatter for BytesIn with various format specifiers:
+ *       - {}      : default formatting, abbreviated hexadecimal with ellipsis
+ *       - {:x}    : lowercase abbreviated hex
+ *       - {:xx}   : full lowercase hex
+ *       - {:X}    : uppercase abbreviated hex
+ *       - {:XX}   : full uppercase hex
+ *       - {:0}    : default abbreviated with "0x" prefix
+ *       - {:0x}   : lowercase abbreviated with "0x" prefix
+ *       - {:0xx}  : full lowercase hex with "0x" prefix
+ *       - {:0X}   : uppercase abbreviated with "0x" prefix
+ *       - {:0XX}  : full uppercase hex with "0x" prefix
+ */
 template <>
 struct fmt::formatter<qtils::Hex> {
-  bool prefix = true;  ///< Show prefix (0x or 0X)
-  bool full = false;   ///< Show full content or abbreviated form
-  bool lower = true;   ///< Use lowercase hex digits
+  /// Whether to prepend the "0x" prefix
+  bool prefix = false;
+  /// Whether to print a full byte sequence or abbreviated form
+  bool full = false;
+  /// Use lowercase (true) or uppercase (false) hex digits
+  bool lower = true;
 
   template <typename ParseContext>
   constexpr auto parse(ParseContext &ctx) {
     constexpr bool is_compile =
-        std::is_same_v<ParseContext, fmt::detail::compile_parse_context<char>>;
+        std::is_same_v<ParseContext, detail::compile_parse_context<char>>;
 
     auto it = ctx.begin();
     auto end = ctx.end();
 
-    if (it == end || *it == '}') {
+    if (it == end or *it == '}') {
       return it;
     }
 
@@ -67,30 +66,67 @@ struct fmt::formatter<qtils::Hex> {
       ++it;
     }
 
-    if (it != end && (*it == 'x' || *it == 'X')) {
-      lower = (*it == 'x');
-      full = true;
-      ++it;
-    } else if constexpr (!is_compile) {
-      throw fmt::format_error("qtils::Hex: expected 'x' or 'X'");
+    if (it == end or *it == '}') {
+      return it;
     }
-    return it;
+
+    if (*it == 'x' or *it == 'X') {
+      lower = (*it == 'x');
+      ++it;
+      if (it == end or *it == '}') {
+        return it;
+      }
+      if (*it == 'x' and lower or *it == 'X' and not lower) {
+        full = true;
+        ++it;
+      }
+    }
+
+    if (it == end or *it == '}') {
+      return it;
+    }
+
+    if constexpr (is_compile) {
+      report_error("invalid format specifier: expected [0][x|xx|X|XX]");
+    } else {
+      throw format_error(
+          "invalid format specifier for Hex: expected [0][x|xx|X|XX]");
+    }
   }
 
   /// Format BytesIn as hex string
   auto format(const std::span<const uint8_t> &span, format_context &ctx) const {
     auto out = ctx.out();
+    if (span.empty()) {
+      return detail::write(out, prefix ? "0x" : "<empty>");
+    }
     if (prefix) {
-      out = fmt::detail::write(out, "0x");
+      out = detail::write(out, "0x");
     }
-    constexpr size_t kHead = 2, kTail = 2, kSmall = 1;
-    if (full or span.size() <= kHead + kTail + kSmall) {
-      return lower ? fmt::format_to(out, "{:02x}", fmt::join(span, ""))
-                   : fmt::format_to(out, "{:02X}", fmt::join(span, ""));
+    constexpr size_t kHead = 2;
+    constexpr size_t kTail = 2;
+    constexpr size_t kSmall = 1;
+
+    auto write_bytes = [&](std::span<const uint8_t> bytes) {
+      if (lower) {
+        for (uint8_t byte : bytes) {
+          out = format_to(out, "{:02x}", byte);
+        }
+      } else {
+        for (uint8_t byte : bytes) {
+          out = format_to(out, "{:02X}", byte);
+        }
+      }
+    };
+
+    if (full or span.size() < kHead + kTail + kSmall) {
+      write_bytes(span);
+    } else {
+      write_bytes(span.first(kHead));
+      out = detail::write(out, "…");
+      write_bytes(span.last(kTail));
     }
-    return fmt::format_to(out,
-        "{:02x}…{:02x}",
-        fmt::join(span.first(kHead), ""),
-        fmt::join(span.last(kTail), ""));
+
+    return out;
   }
 };

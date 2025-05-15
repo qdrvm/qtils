@@ -22,6 +22,8 @@
 
 namespace qtils {
 
+  using byte_t = uint8_t;
+
   /**
    * @class SLBuffer
    * @brief Size-limited dynamic byte buffer with serialization helpers.
@@ -162,7 +164,7 @@ namespace qtils {
 
     /// Convert buffer to hex string
     [[nodiscard]] std::string toHex() const {
-      return to_hex(Hex{*this});
+      return fmt::format("{:xx}", Hex(*this));
     }
 
     /// Construct buffer from hex string
@@ -199,8 +201,8 @@ namespace qtils {
   /// Type alias for unbounded SLBuffer
   using ByteVec = SLBuffer<std::numeric_limits<size_t>::max()>;
 
-  /// Empty buffer constant
-  inline static const ByteVec kEmptyBuffer{};
+  /// Empty ByteVec constant
+  inline static const ByteVec EmptyVec{};
 }  // namespace qtils
 
 /// std::hash specialization for SLBuffer
@@ -210,6 +212,10 @@ struct std::hash<qtils::SLBuffer<N>> {
     return boost::hash_range(x.begin(), x.end());
   }
 };
+
+template <typename Char>
+struct fmt::range_format_kind<qtils::ByteVec, Char>
+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
 
 /// fmt::formatter specialization for ByteVec
 template <>
