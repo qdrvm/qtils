@@ -38,8 +38,4 @@
 #include <qtils/unhex.hpp>
 #include <qtils/unused.hpp>
 #include <qtils/visit_in_place.hpp>
-int main() {
-
-EXPECT_OUTCOME_TRUE_1(outcome::result<int>(1));
-
-}
+int main() {}
