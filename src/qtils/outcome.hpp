@@ -9,6 +9,7 @@
 #include <boost/outcome/result.hpp>
 
 #include <qtils/error.hpp>
+#include <qtils/error_throw.hpp>
 #include <qtils/macro/common.hpp>
 
 #define QTILS_OUTCOME_UNIQUE_NAME QTILS_UNIQUE_NAME(outcome_res_)
@@ -17,6 +18,7 @@ namespace qtils {
   template <typename T, typename E = std::error_code>
   using Result = boost::outcome_v2::
       basic_result<T, E, boost::outcome_v2::policy::default_policy<T, E, void>>;
+
 }  // namespace qtils
 
 // - - - - - - -
@@ -45,3 +47,17 @@ namespace outcome {
   using boost::outcome_v2::failure;
   using boost::outcome_v2::success;
 }  // namespace outcome
+
+namespace qtils {
+  /**
+   * @brief error as a boost exception if an outcome result is failure
+   * @tparam T outcome error type
+   * @param res outcome result
+   */
+  template <typename T>
+  void raise_on_err(const outcome::result<T> &res) {
+    if (res.has_error()) {
+      raise(res.error());
+    }
+  }
+}  // namespace qtils

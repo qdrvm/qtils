@@ -19,6 +19,7 @@
 #include <qtils/endianness_macros.hpp>
 #include <qtils/enum_error_code.hpp>
 #include <qtils/error.hpp>
+#include <qtils/error_throw.hpp>
 #include <qtils/final_action.hpp>
 #include <qtils/fixed_byte_vec.hpp>
 #include <qtils/hex.hpp>
@@ -37,4 +38,8 @@
 #include <qtils/unhex.hpp>
 #include <qtils/unused.hpp>
 #include <qtils/visit_in_place.hpp>
-int main(){}
+int main() {
+
+EXPECT_OUTCOME_TRUE_1(outcome::result<int>(1));
+
+}

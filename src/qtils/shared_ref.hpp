@@ -45,6 +45,25 @@ namespace qtils {
     }
 
     /**
+     * @brief Constructs from a convertible std::shared_ptr<U>
+     * @tparam U Source type
+     * @param sptr The shared pointer to wrap
+     * @throws std::invalid_argument if sptr is null
+     */
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    explicit SharedRef(std::shared_ptr<U> sptr) : ptr_(std::move(sptr)) {
+      if (!ptr_) {
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr");
+      }
+    }
+
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    SharedRef(const std::shared_ptr<U> &other) : ptr_(other) {}
+
+    /**
      * @brief Constructs from raw pointer and custom deleter
      * @param raw Raw pointer to managed object
      * @param deleter Deleter to be used
@@ -58,7 +77,21 @@ namespace qtils {
       }
     }
 
+    /**
+     * @brief Conversion constructor: SharedRef<Derived> -> SharedRef<Base>
+     * @tparam U Type of other SharedRef
+     * @param other Another SharedRef<U>
+     * @note Enabled only if U* is convertible to T*
+     */
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    SharedRef(const SharedRef<U> &other) : ptr_(other.ptr_) {}
+
    private:
+    template <class U, class D>
+      requires(not std::is_void_v<U>)
+    friend class SharedRef;
+
     /**
      * @brief Special tag type to select the DI constructor overload.
      *
@@ -92,7 +125,8 @@ namespace qtils {
         : SharedRef(std::move(sptr)) {
       if (!ptr_) {
         throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr (in private ctor)");
+            "Attempt to initialize SharedRef "
+            "by null shared_ptr (in private ctor)");
       }
     }
 
