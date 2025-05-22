@@ -347,6 +347,7 @@
   ({                                                          \
     [[deprecated(MSG)]] [[maybe_unused]] static constexpr int \
         __deprecated_macro_warning__ = 0;                     \
+    (void)__deprecated_macro_warning__;                       \
   })
 
 /**
