@@ -38,10 +38,7 @@ namespace qtils {
      */
     // NOLINTNEXTLINE(google-explicit-constructor)
     SharedRef(std::shared_ptr<T> sptr) : ptr_(std::move(sptr)) {
-      if (!ptr_) {
-        throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr");
-      }
+      ensureIsNodNull();
     }
 
     /**
@@ -53,15 +50,20 @@ namespace qtils {
     template <typename U>
       requires std::convertible_to<U *, T *>
     explicit SharedRef(std::shared_ptr<U> sptr) : ptr_(std::move(sptr)) {
-      if (!ptr_) {
-        throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr");
-      }
+      ensureIsNodNull();
     }
 
+    /**
+     * @brief Constructs from a convertible std::shared_ptr<U>
+     * @tparam U Source type
+     * @param sptr The shared pointer to wrap
+     * @throws std::invalid_argument if sptr is null
+     */
     template <typename U>
       requires std::convertible_to<U *, T *>
-    SharedRef(const std::shared_ptr<U> &other) : ptr_(other) {}
+    SharedRef(const std::shared_ptr<U> &other) : ptr_(other) {
+      ensureIsNodNull();
+    }
 
     /**
      * @brief Constructs from raw pointer and custom deleter
@@ -71,10 +73,7 @@ namespace qtils {
      */
     SharedRef(T *raw, Deleter deleter = {})
         : ptr_(std::shared_ptr<T>(raw, std::move(deleter))) {
-      if (!ptr_) {
-        throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr");
-      }
+      ensureIsNodNull();
     }
 
     /**
@@ -85,7 +84,9 @@ namespace qtils {
      */
     template <typename U>
       requires std::convertible_to<U *, T *>
-    SharedRef(const SharedRef<U> &other) : ptr_(other.ptr_) {}
+    SharedRef(const SharedRef<U> &other) : ptr_(other.ptr_) {
+      ensureIsNodNull();
+    }
 
    private:
     template <class U, class D>
@@ -250,6 +251,13 @@ namespace qtils {
     }
 
    private:
+    void ensureIsNodNull() {
+      if (!ptr_) {
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr");
+      }
+    }
+
     std::shared_ptr<T> ptr_;
   };
 
