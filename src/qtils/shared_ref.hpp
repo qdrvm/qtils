@@ -38,10 +38,31 @@ namespace qtils {
      */
     // NOLINTNEXTLINE(google-explicit-constructor)
     SharedRef(std::shared_ptr<T> sptr) : ptr_(std::move(sptr)) {
-      if (!ptr_) {
-        throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr");
-      }
+      ensureIsNodNull();
+    }
+
+    /**
+     * @brief Constructs from a convertible std::shared_ptr<U>
+     * @tparam U Source type
+     * @param sptr The shared pointer to wrap
+     * @throws std::invalid_argument if sptr is null
+     */
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    explicit SharedRef(std::shared_ptr<U> sptr) : ptr_(std::move(sptr)) {
+      ensureIsNodNull();
+    }
+
+    /**
+     * @brief Constructs from a convertible std::shared_ptr<U>
+     * @tparam U Source type
+     * @param sptr The shared pointer to wrap
+     * @throws std::invalid_argument if sptr is null
+     */
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    SharedRef(const std::shared_ptr<U> &other) : ptr_(other) {
+      ensureIsNodNull();
     }
 
     /**
@@ -52,13 +73,26 @@ namespace qtils {
      */
     SharedRef(T *raw, Deleter deleter = {})
         : ptr_(std::shared_ptr<T>(raw, std::move(deleter))) {
-      if (!ptr_) {
-        throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr");
-      }
+      ensureIsNodNull();
+    }
+
+    /**
+     * @brief Conversion constructor: SharedRef<Derived> -> SharedRef<Base>
+     * @tparam U Type of other SharedRef
+     * @param other Another SharedRef<U>
+     * @note Enabled only if U* is convertible to T*
+     */
+    template <typename U>
+      requires std::convertible_to<U *, T *>
+    SharedRef(const SharedRef<U> &other) : ptr_(other.ptr_) {
+      ensureIsNodNull();
     }
 
    private:
+    template <class U, class D>
+      requires(not std::is_void_v<U>)
+    friend class SharedRef;
+
     /**
      * @brief Special tag type to select the DI constructor overload.
      *
@@ -92,7 +126,8 @@ namespace qtils {
         : SharedRef(std::move(sptr)) {
       if (!ptr_) {
         throw std::invalid_argument(
-            "Attempt to initialize SharedRef by null shared_ptr (in private ctor)");
+            "Attempt to initialize SharedRef "
+            "by null shared_ptr (in private ctor)");
       }
     }
 
@@ -216,6 +251,13 @@ namespace qtils {
     }
 
    private:
+    void ensureIsNodNull() {
+      if (!ptr_) {
+        throw std::invalid_argument(
+            "Attempt to initialize SharedRef by null shared_ptr");
+      }
+    }
+
     std::shared_ptr<T> ptr_;
   };
 

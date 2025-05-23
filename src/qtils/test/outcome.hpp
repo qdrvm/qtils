@@ -82,6 +82,34 @@
     }                                                                      \
   })
 
+// assert outcome exception
+
+#define _ASSERT_THROW_OUTCOME_1(_expression_)                                 \
+  try {                                                                       \
+    (_expression_);                                                           \
+    GTEST_FATAL_FAILURE_("Expected ErrorException, but no exception thrown"); \
+  } catch (const qtils::ErrorException &) {                                   \
+    SUCCEED();                                                                \
+  } catch (...) {                                                             \
+    GTEST_FATAL_FAILURE_("Expected ErrorException, but different exception"); \
+  }
+
+#define _ASSERT_THROW_OUTCOME_2(_expression_, _expected_code_)                \
+  try {                                                                       \
+    (_expression_);                                                           \
+    GTEST_FATAL_FAILURE_(                                                     \
+        "Expected ErrorException with code, but no exception thrown");        \
+  } catch (const qtils::ErrorException &e) {                                  \
+    if (e.code() != qtils::asError(_expected_code_)) {                        \
+      GTEST_FATAL_FAILURE_("ErrorException code mismatch")                    \
+          << "  Actual:   '" << e.code().message() << "'\n"                   \
+          << "Expected:   '" << make_error_code(_expected_code_).message()    \
+          << "'";                                                             \
+    }                                                                         \
+  } catch (...) {                                                             \
+    GTEST_FATAL_FAILURE_("Expected ErrorException, but different exception"); \
+  }
+
 // expect success
 
 #define _EXPECT_OUTCOME_SUCCESS_2(_result_, _expression_)                 \
@@ -142,9 +170,36 @@
     }                                                             \
   })
 
-// Dispatchers for one or two or three arguments
-#define _GET_MACRO_OF_2(_1, _2, NAME, ...) NAME
-#define _GET_MACRO_OF_3(_1, _2, _3, NAME, ...) NAME
+// expect outcome exception
+
+#define _EXPECT_THROW_OUTCOME_1(_expression_)                \
+  try {                                                      \
+    (_expression_);                                          \
+    GTEST_NONFATAL_FAILURE_(                                 \
+        "Expected ErrorException, but no exception thrown"); \
+  } catch (const qtils::ErrorException &) {                  \
+    SUCCEED();                                               \
+  } catch (...) {                                            \
+    GTEST_NONFATAL_FAILURE_(                                 \
+        "Expected ErrorException, but different exception"); \
+  }
+
+#define _EXPECT_THROW_OUTCOME_2(_expression_, _expected_code_)             \
+  try {                                                                    \
+    (_expression_);                                                        \
+    GTEST_NONFATAL_FAILURE_(                                               \
+        "Expected ErrorException with code, but no exception thrown");     \
+  } catch (const qtils::ErrorException &e) {                               \
+    if (e.code() != qtils::asError(_expected_code_)) {                     \
+      GTEST_NONFATAL_FAILURE_("ErrorException code mismatch")              \
+          << "  Actual:   '" << e.code().message() << "'\n"                \
+          << "Expected:   '" << make_error_code(_expected_code_).message() \
+          << "'";                                                          \
+    }                                                                      \
+  } catch (...) {                                                          \
+    GTEST_NONFATAL_FAILURE_(                                               \
+        "Expected ErrorException, but different exception");               \
+  }
 
 // ------ Macros -------
 
@@ -198,6 +253,24 @@
       _ASSERT_OUTCOME_ERROR_1)(__VA_ARGS__)
 
 /**
+ * @brief Asserts that an expression throws ErrorException (optionally with
+ * expected error code)
+ *
+ * @param _expression_ Expression expected to throw
+ * @param _expected_code_ (optional) Expected error code
+ *
+ * @example
+ * @code
+ * ASSERT_THROW_OUTCOME(func());
+ * ASSERT_THROW_OUTCOME(func(), MyErrors::Invalid);
+ * @endcode
+ */
+#define ASSERT_THROW_OUTCOME(...) \
+  _GET_MACRO_OF_2(__VA_ARGS__,    \
+      _ASSERT_THROW_OUTCOME_2,    \
+      _ASSERT_THROW_OUTCOME_1)(__VA_ARGS__)
+
+/**
  * @brief Checks the success of an expression without terminating the test.
  *
  * @details This macro verifies that the result of `_expression_` is successful
@@ -249,54 +322,86 @@
       _EXPECT_OUTCOME_ERROR_2,    \
       _EXPECT_OUTCOME_ERROR_1)(__VA_ARGS__)
 
+/**
+ * @brief Expects that an expression throws ErrorException (optionally with
+ * expected error code)
+ *
+ * @param _expression_ Expression expected to throw
+ * @param _expected_code_ (optional) Expected error code
+ *
+ * @example
+ * @code
+ * EXPECT_THROW_OUTCOME(func());
+ * EXPECT_THROW_OUTCOME(func(), MyErrors::Conflict);
+ * @endcode
+ */
+#define EXPECT_THROW_OUTCOME(...) \
+  _GET_MACRO_OF_2(__VA_ARGS__,    \
+      _EXPECT_THROW_OUTCOME_2,    \
+      _EXPECT_THROW_OUTCOME_1)(__VA_ARGS__)
+
 // ------ Obsolete ------
 // TODO(xDimon): remove it at release
+
+#define _DEPRECATED_MACRO(MSG)                                \
+  ({                                                          \
+    [[deprecated(MSG)]] [[maybe_unused]] static constexpr int \
+        __deprecated_macro_warning__ = 0;                     \
+    (void)__deprecated_macro_warning__;                       \
+  })
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_ERROR` instead.
  * @deprecated
  */
-#define ASSERT_OUTCOME_SOME_ERROR(_expression_) \
+#define ASSERT_OUTCOME_SOME_ERROR(_expression_)            \
+  _DEPRECATED_MACRO("Use `ASSERT_OUTCOME_ERROR` instead"); \
   _ASSERT_OUTCOME_ERROR_1(_expression_)
 
 /**
  * @details This macro is obsolete. Use `EXPECT_OUTCOME_ERROR` instead.
  * @deprecated
  */
-#define EXPECT_OUTCOME_SOME_ERROR(_result_, _expression_) \
+#define EXPECT_OUTCOME_SOME_ERROR(_result_, _expression_)  \
+  _DEPRECATED_MACRO("Use `EXPECT_OUTCOME_ERROR` instead"); \
   _EXPECT_OUTCOME_ERROR_2(_result_, _expression_)
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_SUCCESS` instead.
  * @deprecated
  */
-#define ASSERT_OUTCOME_SUCCESS_TRY(_expression_) \
+#define ASSERT_OUTCOME_SUCCESS_TRY(_expression_)             \
+  _DEPRECATED_MACRO("Use `ASSERT_OUTCOME_SUCCESS` instead"); \
   _ASSERT_OUTCOME_SUCCESS_1(_expression_)
 
 /**
  * @details This macro is obsolete. Use `EXPECT_OUTCOME_SUCCESS` instead.
  * @deprecated
  */
-#define EXPECT_OUTCOME_TRUE_1(_expression_) \
+#define EXPECT_OUTCOME_TRUE_1(_expression_)                  \
+  _DEPRECATED_MACRO("Use `EXPECT_OUTCOME_SUCCESS` instead"); \
   _EXPECT_OUTCOME_SUCCESS_1(_expression_)
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_SUCCESS` instead.
  * @deprecated
  */
-#define EXPECT_OUTCOME_TRUER(_result_, _expression_) \
+#define EXPECT_OUTCOME_TRUER(_result_, _expression_)         \
+  _DEPRECATED_MACRO("Use `ASSERT_OUTCOME_SUCCESS` instead"); \
   _ASSERT_OUTCOME_SUCCESS_2(_result_, _expression_)
 
 /**
  * @details This macro is obsolete. Use `EXPECT_OUTCOME_ERROR` instead.
  * @deprecated
  */
-#define EXPECT_OUTCOME_FALSE_1(_expression_) \
+#define EXPECT_OUTCOME_FALSE_1(_expression_)               \
+  _DEPRECATED_MACRO("Use `EXPECT_OUTCOME_ERROR` instead"); \
   _EXPECT_OUTCOME_ERROR_1(_expression_)
 
 /**
  * @details This macro is obsolete. Use `ASSERT_OUTCOME_SUCCESS` instead.
  * @deprecated
  */
-#define ASSERT_OUTCOME_SUCCESS_void(_expression_) \
+#define ASSERT_OUTCOME_SUCCESS_void(_expression_)            \
+  _DEPRECATED_MACRO("Use `ASSERT_OUTCOME_SUCCESS` instead"); \
   _ASSERT_OUTCOME_SUCCESS_1(_expression_)
