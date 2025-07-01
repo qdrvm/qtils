@@ -56,7 +56,7 @@ namespace qtils {
    */
   template <typename T>
   void raise_on_err(const outcome::result<T> &res) {
-    if (res.has_error()) {
+    if (!res.has_value()) {
       raise(res.error());
     }
   }
