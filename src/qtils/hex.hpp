@@ -12,13 +12,16 @@
 #include <type_traits>
 
 namespace qtils {
+  using BytesIn = std::span<const uint8_t>;
 
   /**
    * @struct Hex
    * @brief Wrapper for hex encoding of byte sequences.
    */
-  struct Hex : std::span<const uint8_t> {
-    using std::span<const uint8_t>::span;
+  struct Hex : BytesIn {
+    using BytesIn::span;
+
+    Hex(BytesIn span) : BytesIn{span} {}
   };
 
 }  // namespace qtils
