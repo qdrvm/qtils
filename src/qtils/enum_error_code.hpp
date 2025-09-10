@@ -8,6 +8,7 @@
 
 #include <system_error>
 #include <type_traits>
+#include <typeinfo>
 
 namespace qtils {
   template <typename E>
