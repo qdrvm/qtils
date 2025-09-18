@@ -7,6 +7,7 @@
 #pragma once
 
 #include <boost/outcome/result.hpp>
+#include <boost/outcome/try.hpp>
 
 #include <qtils/error.hpp>
 #include <qtils/error_throw.hpp>
@@ -25,21 +26,10 @@ namespace qtils {
 // compatibility
 // v v v v v v v
 
-#define _OUTCOME_TRY_void(tmp, expr)    \
-  auto &&tmp = expr;                    \
-  if (tmp.has_error()) {                \
-    return std::move(tmp).as_failure(); \
-  }
-#define _BOOST_OUTCOME_TRY(tmp, out, expr) \
-  _OUTCOME_TRY_void(tmp, expr) out = std::move(tmp).value()
-#define BOOST_OUTCOME_TRY(out, expr) \
-  _BOOST_OUTCOME_TRY(QTILS_OUTCOME_UNIQUE_NAME, out, expr)
-#define _OUTCOME_TRY_out(tmp, out, expr) \
-  _BOOST_OUTCOME_TRY(tmp, auto &&out, expr)
+#define _OUTCOME_TRY_void(expr) BOOST_OUTCOME_TRY(expr)
+#define _OUTCOME_TRY_out(out, expr) BOOST_OUTCOME_TRY(auto &&out, expr)
 #define _OUTCOME_OVERLOAD(_1, _2, s, ...) _OUTCOME_TRY_##s
-#define OUTCOME_TRY(...)                     \
-  _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)( \
-      QTILS_OUTCOME_UNIQUE_NAME, __VA_ARGS__)
+#define OUTCOME_TRY(...) _OUTCOME_OVERLOAD(__VA_ARGS__, out, void)(__VA_ARGS__)
 
 namespace outcome {
   template <class R>
